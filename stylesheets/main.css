@@ -1,0 +1,78 @@
+/*
+blue: #3167ab
+red: #b13239
+*/
+
+@media only screen and (min-width: 601px) and (max-width: 910px){
+  .input-field.right-align {
+    padding: 0 .25rem;
+  }
+  .input-field.right-align .btn{
+    padding: 0;
+    font-size: .75rem;
+  }
+
+  #show-crimes, #clear-map {
+    font-size: .75rem;
+    padding: 0 .40rem;
+  }
+}
+
+@media only screen and (min-width: 601px) {
+  .container {
+    width: 90%;
+  }
+}
+
+@media only screen and (min-width: 993px) {
+  .container {
+    width: 85%;
+  }
+}
+
+@media only screen and (max-width: 601px) {
+  .radio-container {
+    display: inline;
+  }
+}
+
+#map {
+  height: 500px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+h2 {
+  font-size: 2rem;
+}
+
+[type="radio"]:checked+label:after, [type="radio"].with-gap:checked+label:after {
+  background-color: #3167ab;
+  border-color: #3167ab;
+}
+
+nav {
+  background-color: #b13239;
+  opacity: 0.75;
+}
+nav .brand-logo {
+  font-weight: 300;
+  font-style: italic;
+  font-size: 3rem;
+}
+
+.btn {
+  background-color: #3167ab;
+  padding: 0 1rem;
+}
+.btn-right {
+  width: 100%;
+  padding: 0 .75rem;
+}
+
+.waves-effect.waves-blue .waves-ripple {
+  background-color: rgba(35, 70, 110, 1);
+}
+.waves-effect.waves-blue:hover {
+  background-color: rgba(35, 70, 110, 1);
+}

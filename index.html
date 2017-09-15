@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New 2 Austin</title>
+    <!--Import Google Icon Font-->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Compiled and minified CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css">
+    <link rel="stylesheet" href="stylesheets/main.css">
+    <!-- Compiled and minified JavaScript -->
+    <script src="https://code.jquery.com/jquery-3.2.1.js" integrity="sha256-DZAnKJ/6XZ9si04Hgrsxu/8s717jcIzLy3oi35EouyE=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js"></script>
+    <script type="text/javascript" src="js/app.js"  defer></script>
+  </head>
+  <body>
+    <!-- navbar -->
+    <nav>
+      <div class="nav-wrapper">
+        <a href="#" class="brand-logo center">New2Austin</a>
+      </div>
+    </nav>
+    <!-- /navbar -->
+    <div class="container">
+      <div class="row">
+        <!-- side navigation and user forms -->
+        <aside class="col s12 m4">
+          <h2 class="center-align">Find Your New Austin Apartment</h2>
+          <div class="row">
+
+            <div class="col s12 center-align">
+              <a class="waves-effect waves-blue btn" id="show-crimes" href="#map">Show Crimes</a>
+              <a class="waves-effect waves-blue btn" id="clear-map">Clear Map</a>
+            </div>
+
+            <div class="col s12"><hr></div>
+
+            <div class="col s12 center-align">
+              <p>Draw a shape to search the area within it</p>
+              <a class="waves-effect waves-blue btn" id="toggle-drawing" href="#map">Drawing Tools</a>
+            </div>
+
+            <div class="col s12"><hr></div>
+
+            <div class="input-field col s8">
+              <input placeholder="Cherrywood, University of Texas..." id="zoom-to-places" type="text">
+              <label for="landmark">Search by Area, Landmark</label>
+            </div>
+            <div class="input-field col s4 right-align">
+              <a class="waves-effect waves-blue btn btn-right" id="zoom-to-places-go" href="#map">Zoom</a>
+            </div>
+
+            <div class="col s12"><hr></div>
+
+            <div class="input-field col s8">
+              <input placeholder="Apartments, bars, gyms..." id="search-nearby-places" type="text">
+              <label for="landmark">Search for nearby places</label>
+            </div>
+            <div class="input-field col s4 right-align">
+              <a class="waves-effect waves-blue btn btn-right" id="search-nearby-places-go" href="#map">Go</a>
+            </div>
+
+            <div class="col s12"><hr></div>
+
+            <div class="input-field col s8">
+              <select id="crimeType">
+                <option value="" disabled selected>Choose your option</option>
+                <option value="1">Sex Crimes</option>
+                <option value="2">Theft and Burglary</option>
+                <option value="3">Assault</option>
+                <option value="4">Possession</option>
+                <option value="5">Driving and Auto</option>
+                <option value="6">All</option>
+              </select>
+              <label>Filter by crime severity</label>
+
+            </div>
+            <div class="input-field col s4 right-align">
+              <a class="waves-effect waves-blue btn btn-right" id="crimeType-go" href="#map">Update</a>
+            </div>
+
+            <div class="col s12"><hr></div>
+
+            <div class="col s12">
+              <form action="#">
+                <label>Choose Map Type</label>
+                <div class="radio-container">
+                  <input name="group1" type="radio" id="toggleStandard" checked='checked'/>
+                  <label for="toggleStandard">Standard</label>
+                </div>
+                <div class="radio-container">
+                  <input name="group1" type="radio" id="toggleCluster" />
+                  <label for="toggleCluster">Cluster</label>
+                </div>
+                <div class="radio-container">
+                  <input name="group1" type="radio" id="toggleHeatmap"  />
+                  <label for="toggleHeatmap">Heatmap</label>
+                </div>
+              </form>
+            </div>
+          </div>
+        </aside>
+        <!-- /side navigation and user forms -->
+
+        <!-- map -->
+        <main class="col s12 m8">
+          <h2 class="center-align">Map Results</h2>
+          <div class="row" id="map"></div>
+        </main>
+        <!-- /map -->
+      </div>
+    </div>
+    <script src="js/markerclusterer.js"></script>
+    <script defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBmtXin7oAd31UpI6KzioQIdSNBqCQuKx8&libraries=drawing,geometry,places,visualization&callback=initMap" type="text/javascript"></script>
+  </body>
+</html>
