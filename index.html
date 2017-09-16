@@ -82,15 +82,15 @@
               <form action="#">
                 <label>Choose Map Type</label>
                 <div class="radio-container">
-                  <input name="group1" type="radio" id="toggleStandard" checked='checked'/>
+                  <input data-bind="checked: mapType, click: updateMapType" value='standard' name="mapType" type="radio" id="toggleStandard" />
                   <label for="toggleStandard">Standard</label>
                 </div>
                 <div class="radio-container">
-                  <input name="group1" type="radio" id="toggleCluster" />
+                  <input data-bind="checked: mapType, click: updateMapType" value='cluster' name="mapType" type="radio" id="toggleCluster" />
                   <label for="toggleCluster">Cluster</label>
                 </div>
                 <div class="radio-container">
-                  <input name="group1" type="radio" id="toggleHeatmap"  />
+                  <input data-bind="checked: mapType, click: updateMapType" value='heatmap' name="mapType" type="radio" id="toggleHeatmap"  />
                   <label for="toggleHeatmap">Heatmap</label>
                 </div>
               </form>

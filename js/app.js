@@ -7,7 +7,7 @@ function AppViewModel() {
   self.zoomToAreaText = ko.observable('');
   self.placesSearchboxText = ko.observable('');
   self.crimeCode = ko.observable('');
-  self.mapType = ko.observable('');
+  self.mapType = ko.observable('standard');
 
 
   // loop through and display all crime markers
@@ -111,7 +111,9 @@ function AppViewModel() {
       heatMapData.push(latLng);
 
     }
-    self.showCrimes();
+    if (newLocations.length > 0) {
+      self.showCrimes();
+    }
 
     // re-check standard view by default
     // ************************* TODO *************************
@@ -231,6 +233,36 @@ function AppViewModel() {
     self.updateCrimeMarkers(filteredLocations);
   }
 
+
+  // toggles different views of crime data
+  // hide and show markers as different views
+  // options are standard, clustered, or heatmap
+  // resets view before setting to a new one
+  self.updateMapType = function() {
+    let mapType = self.mapType();
+
+    switch (mapType) {
+      case 'standard':
+        self.resetMarkers();
+        self.showCrimes(false);
+        break;
+
+      case 'cluster':
+        self.resetMarkers();
+        markerCluster = new MarkerClusterer(map, crimeMarkers, {imagePath: './m'});
+        self.showCrimes(false);
+        break;
+
+      case 'heatmap':
+        self.resetMarkers();
+        heatmap.setMap(map);
+        break;
+    }
+
+    // let the default click action proceed
+    return true;
+  }
+
 }
 
 // instantiate autocomplete and update value for the binding when a user
@@ -307,15 +339,9 @@ $(document).ready(function() {
   $('select').material_select();
 
   // toggles different views of crime data
-  document.getElementById('toggleStandard').addEventListener('click', toggleStandard);
-  document.getElementById('toggleCluster').addEventListener('click', toggleCluster);
-  document.getElementById('toggleHeatmap').addEventListener('click', toggleHeatmap);
-
-  // listen for users to click for filtering by category
-  // and grab the selected category from the dropdown
-  // document.getElementById('crimeType-go').addEventListener('click', function(e) {
-  //   filterCrimeMarkersType(document.getElementById('crimeType').value);
-  // });
+  // document.getElementById('toggleStandard').addEventListener('click', toggleStandard);
+  // document.getElementById('toggleCluster').addEventListener('click', toggleCluster);
+  // document.getElementById('toggleHeatmap').addEventListener('click', toggleHeatmap);
 
   // Activates knockout.js
   ko.applyBindings(new AppViewModel());
@@ -518,110 +544,23 @@ function searchWithinPolygon() {
 }
 
 
-// hide and show markers as different views
-// options are standard, clustered, or heatmap
-// resets view before setting to a new one
-function toggleHeatmap() {
-  resetMarkers();
-  heatmap.setMap(map);
-}
-
-function toggleCluster() {
-  resetMarkers();
-  markerCluster = new MarkerClusterer(map, crimeMarkers, {imagePath: './m'});
-  showCrimes(false);
-}
-
-function toggleStandard() {
-  resetMarkers();
-  showCrimes(false);
-}
-
-
-// // filter the full locations array of all crimes by crime type
-// function filterCrimeMarkersType(crimeCode) {
-//   let filteredLocations = [];
-//
-//   // default case, to return all locations unfiltered
-//   if (crimeCode === '6') {
-//     return locations;
-//   }
-//
-//   // push to filtered array based on crime code
-//   locations.forEach(function(location) {
-//     switch (crimeCode) {
-//       // sex and rape
-//       case '1':
-//         if (location.crimeType.search(/sex|rape/i) > -1) {
-//           filteredLocations.push(location);
-//         }
-//         break;
-//       // theft and burglary
-//       case '2':
-//         if (location.crimeType.search(/burgl|theft|tress/i) > -1) {
-//           filteredLocations.push(location);
-//         }
-//         break;
-//       // assault
-//       case '3':
-//         if (location.crimeType.search(/assault|aslt/i) > -1) {
-//           filteredLocations.push(location);
-//         }
-//         break;
-//       // possession
-//       case '4':
-//         if (location.crimeType.search(/poss/i) > -1) {
-//           filteredLocations.push(location);
-//         }
-//         break;
-//       // driving
-//       case '5':
-//         if (location.crimeType.search(/dui|dwi|driving/i) > -1) {
-//           filteredLocations.push(location);
-//         }
-//         break;
-//       // other
-//       // case '6':
-//       default:
-//     }
-//   });
-//   updateCrimeMarkers(filteredLocations);
-// }
-
-
-// // updates array of crime markers after filtering by type or date
-// function updateCrimeMarkers(newLocations) {
+// // hide and show markers as different views
+// // options are standard, clustered, or heatmap
+// // resets view before setting to a new one
+// function toggleHeatmap() {
 //   resetMarkers();
-//   // remove all references to previous markers, full delete
-//   crimeMarkers = [];
+//   heatmap.setMap(map);
+// }
 //
-//   for (let i = 0; i < newLocations.length; i++) {
-//     let position = newLocations[i].location;
-//     let title = newLocations[i].crimeType;
+// function toggleCluster() {
+//   resetMarkers();
+//   markerCluster = new MarkerClusterer(map, crimeMarkers, {imagePath: './m'});
+//   showCrimes(false);
+// }
 //
-//     // create a new marker for each location
-//     let marker = new google.maps.Marker({
-//       position: position,
-//       title: title,
-//       animation: google.maps.Animation.DROP,
-//       id: i,
-//       date: formatDate(newLocations[i].date),
-//       reportNum: newLocations[i].reportNum
-//     });
-//     // add to markers array
-//     crimeMarkers.push(marker);
-//
-//     // add listeners to open infowindow with crime details on click
-//     marker.addListener('click', setupCrimeMarkerListener);
-//
-//     let latLng = new google.maps.LatLng(newLocations[i].location.lat, newLocations[i].location.lng);
-//     heatMapData.push(latLng);
-//
-//   }
-//   showCrimes();
-//
-//   // re-check standard view by default
-//   document.getElementById('toggleStandard').checked = true;
+// function toggleStandard() {
+//   resetMarkers();
+//   showCrimes(false);
 // }
 
 // formats a raw floating timestamp to more common YYYY MMM DD
