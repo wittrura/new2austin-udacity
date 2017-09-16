@@ -34,17 +34,17 @@
 
             <div class="col s12 center-align">
               <p>Draw a shape to search the area within it</p>
-              <a class="waves-effect waves-blue btn" id="toggle-drawing" href="#map">Drawing Tools</a>
+              <a data-bind="click: toggleDrawingManager" class="waves-effect waves-blue btn" id="toggle-drawing" href="#map">Drawing Tools</a>
             </div>
 
             <div class="col s12"><hr></div>
 
             <div class="input-field col s8">
-              <input placeholder="Cherrywood, University of Texas..." id="zoom-to-places" type="text">
+              <input data-bind="addressAutocomplete: zoomToAreaText" placeholder="Cherrywood, University of Texas..." id="zoom-to-places" type="text">
               <label for="landmark">Search by Area, Landmark</label>
             </div>
             <div class="input-field col s4 right-align">
-              <a class="waves-effect waves-blue btn btn-right" id="zoom-to-places-go" href="#map">Zoom</a>
+              <a data-bind="click: zoomToArea" class="waves-effect waves-blue btn btn-right" id="zoom-to-places-go" href="#map">Zoom</a>
             </div>
 
             <div class="col s12"><hr></div>

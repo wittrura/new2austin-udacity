@@ -1,14 +1,14 @@
 /* jshint esversion: 6 */
 
-// This is a simple *viewmodel* - JavaScript that defines the data and behavior of your UI
+// *viewmodel* - JavaScript that defines the data and behavior of your UI
 function AppViewModel() {
-  this.isShowingCrimes = ko.observable(true);
-  this.zoomArea = ko.observable('');
-  this.nearbyPlaces = ko.observable('');
-  this.crimeSeverity = ko.observable('');
-  this.mapType = 'Standard';
+  let self = this;
 
-  // loop through markers and display all
+  self.zoomToAreaText = ko.observable('');
+  self.nearbyPlaces = ko.observable('');
+  self.crimeSeverity = ko.observable('');
+
+  // loop through and display all crime markers
   self.showCrimes = function(fitBounds = true) {
     // instantiate map boundaries
     let bounds = new google.maps.LatLngBounds();
@@ -34,33 +34,89 @@ function AppViewModel() {
     heatmap.setMap(null);
   }
 
-  self.searchByInputField = function(field) {
-    return;
+  // shows and hides drawing options
+  self.toggleDrawingManager = function(drawingManger) {
+    if (drawingManager.map) {
+      drawingManager.setMap(null);
+      if (polygon) {
+        // removes polygon but leaves markers
+        polygon.setMap(null);
+      }
+    } else {
+      drawingManager.setMap(map);
+    }
+  }
+
+  // update map view based on user input for a specific address, area, or place
+  self.zoomToArea = function() {
+    let geocoder = new google.maps.Geocoder();
+    let address = self.zoomToAreaText();
+
+    // prompt if input box is empty
+    if (address === '') {
+      window.alert('Please enter an area, place, or address');
+    } else {
+
+      // geocode it to get lat lng
+      geocoder.geocode({
+        address: address
+      }, function(results, status) {
+        if (status == 'OK') {
+          // if response is successful, update map center and zoom in
+          map.setCenter(results[0].geometry.location);
+          map.setZoom(14);
+        } else {
+          window.alert('There was an error connecting to the server. Please try again');
+        }
+      });
+    }
   }
 
 
 }
 
+ko.bindingHandlers.addressAutocomplete = {
+  // This will be called when the binding is first applied to an element
+  // Set up any initial state, event handlers, etc. here
+  init: function(element, valueAccessor) {
+    let value = valueAccessor();
+
+    let zoomAutocomplete = new google.maps.places.Autocomplete(element);
+    zoomAutocomplete.bindTo('bounds', map);
+
+    // adds listener to update value on place_changed event, after user selects
+    // from autocomplete dropdown
+    google.maps.event.addListener(zoomAutocomplete, 'place_changed', function() {
+      let result = zoomAutocomplete.getPlace();
+      value(result.formatted_address);
+    });
+  },
+
+  // This will be called once when the binding is first applied to an element,
+  // and again whenever any observables/computeds that are accessed change
+  // Update the DOM element based on the supplied values here.
+  update: function(element, valueAccessor) {
+    ko.bindingHandlers.value.update(element, valueAccessor);
+  }
+};
+
+// Activates knockout.js
+// ko.applyBindings(new AppViewModel());
 
 $(document).ready(function() {
-
-  // Activates knockout.js
-  ko.applyBindings(new AppViewModel());
-
-
   $('select').material_select();
 
   // document.getElementById('show-crimes').addEventListener('click', showCrimes);
   // document.getElementById('clear-map').addEventListener('click', resetMarkers);
 
-  document.getElementById('toggle-drawing').addEventListener('click', function() {
-    toggleDrawing(drawingManager);
-  });
+  // document.getElementById('toggle-drawing').addEventListener('click', function() {
+  //   toggleDrawing(drawingManager);
+  // });
 
-  document.getElementById('zoom-to-places-go').addEventListener('click', zoomToPlaces);
+  // document.getElementById('zoom-to-places-go').addEventListener('click', zoomToPlaces);
 
-  let zoomAutocomplete = new google.maps.places.Autocomplete(document.getElementById('zoom-to-places'));
-  zoomAutocomplete.bindTo('bounds', map);
+  // let zoomAutocomplete = new google.maps.places.Autocomplete(document.getElementById('zoom-to-places'));
+  // zoomAutocomplete.bindTo('bounds', map);
 
   // search box, more wide-reaching version of autocomplete. able to search places
   // bias the SearchBox results towards current map's viewport.
@@ -88,6 +144,9 @@ $(document).ready(function() {
   document.getElementById('crimeType-go').addEventListener('click', function(e) {
     filterCrimeMarkersType(document.getElementById('crimeType').value);
   });
+
+  // Activates knockout.js
+  ko.applyBindings(new AppViewModel());
 });
 
 
@@ -130,7 +189,8 @@ function initMap() {
     type: "GET",
     data: {
       "$offset": 5000,
-      "$limit" : 500,
+      // "$limit" : 500,
+      "$limit" : 50,
       "$$app_token" : "TaNrAhtTuk3dVwHmpmMHRJJYX"
     }
   }).done(function(data) {
@@ -270,18 +330,18 @@ function hideMarkers(markers) {
 }
 
 
-// shows and hides drawing options
-function toggleDrawing(drawingManger) {
-  if (drawingManager.map) {
-    drawingManager.setMap(null);
-    if (polygon) {
-      // removes polygon but leaves markers
-      polygon.setMap(null);
-    }
-  } else {
-    drawingManager.setMap(map);
-  }
-}
+// // shows and hides drawing options
+// function toggleDrawing(drawingManger) {
+//   if (drawingManager.map) {
+//     drawingManager.setMap(null);
+//     if (polygon) {
+//       // removes polygon but leaves markers
+//       polygon.setMap(null);
+//     }
+//   } else {
+//     drawingManager.setMap(map);
+//   }
+// }
 
 
 // handles drawing tools
@@ -317,30 +377,30 @@ function searchWithinPolygon() {
 }
 
 
-// update map view based on user input for a specific address, area, or place
-function zoomToPlaces() {
-  let geocoder = new google.maps.Geocoder();
-  let address = document.getElementById('zoom-to-places').value;
-
-  // prompt if input box is empty
-  if (address === '') {
-    window.alert('Please enter an area, place, or address');
-  } else {
-
-    // geocode it to get lat lng
-    geocoder.geocode({
-      address: address
-    }, function(results, status) {
-      if (status == 'OK') {
-        // if response is successful, update map center and zoom in
-        map.setCenter(results[0].geometry.location);
-        map.setZoom(14);
-      } else {
-        window.alert('There was an error connecting to the server. Please try again');
-      }
-    });
-  }
-}
+// // update map view based on user input for a specific address, area, or place
+// function zoomToPlaces() {
+//   let geocoder = new google.maps.Geocoder();
+//   let address = document.getElementById('zoom-to-places').value;
+//
+//   // prompt if input box is empty
+//   if (address === '') {
+//     window.alert('Please enter an area, place, or address');
+//   } else {
+//
+//     // geocode it to get lat lng
+//     geocoder.geocode({
+//       address: address
+//     }, function(results, status) {
+//       if (status == 'OK') {
+//         // if response is successful, update map center and zoom in
+//         map.setCenter(results[0].geometry.location);
+//         map.setZoom(14);
+//       } else {
+//         window.alert('There was an error connecting to the server. Please try again');
+//       }
+//     });
+//   }
+// }
 
 
 // executes if user enters text to search places and clicks a suggestion
@@ -425,7 +485,7 @@ function toggleHeatmap() {
 
 function toggleCluster() {
   resetMarkers();
-  markerCluster = new MarkerClusterer(map, crimeMarkers, {imagePath: '../m'});
+  markerCluster = new MarkerClusterer(map, crimeMarkers, {imagePath: './m'});
   showCrimes(false);
 }
 
