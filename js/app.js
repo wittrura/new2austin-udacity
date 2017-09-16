@@ -42,6 +42,7 @@ function AppViewModel() {
     }
   }
 
+  // populate array of markers when executing a search for nearby places
   self.createMarkersForPlaces = function(places) {
     let bounds = new google.maps.LatLngBounds();
 
@@ -114,17 +115,39 @@ function AppViewModel() {
     }
   }
 
+  // executes if user enters text to search places and clicks 'go'
   self.searchNearbyPlaces = function() {
-  }
+    let bounds = map.getBounds();
+    let placesService = new google.maps.places.PlacesService(map);
+    let searchText = self.placesSearchboxText();
 
+    self.hideMarkers(placeMarkers);
+
+    if (searchText === '') {
+      window.alert('Please enter an area or place');
+    } else {
+      placesService.textSearch({
+        // bias the search to be within 1000m of the center of the map
+        location: map.getCenter(),
+        radius: 2000,
+        query: searchText,
+        bounds: bounds
+      }, function(results, status) {
+        if (status === google.maps.places.PlacesServiceStatus.OK) {
+          self.createMarkersForPlaces(results);
+        }
+      });
+    }
+  }
 
 }
 
-
+// instantiate autocomplete and update value for the binding when a user
+// selects an autocomplete suggestion
 ko.bindingHandlers.addressAutocomplete = {
   // This will be called when the binding is first applied to an element
   // Set up any initial state, event handlers, etc. here
-  init: function(element, valueAccessor) {
+  init: function(element, valueAccessor, allBindingsAccessor) {
     let value = valueAccessor();
 
     let zoomAutocomplete = new google.maps.places.Autocomplete(element);
@@ -141,23 +164,23 @@ ko.bindingHandlers.addressAutocomplete = {
   // This will be called once when the binding is first applied to an element,
   // and again whenever any observables/computeds that are accessed change
   // Update the DOM element based on the supplied values here.
-  update: function(element, valueAccessor) {
+  update: function(element, valueAccessor, allBindingsAccessor) {
     ko.bindingHandlers.value.update(element, valueAccessor);
   }
 };
 
 // search box, more wide-reaching version of autocomplete. able to search places
 ko.bindingHandlers.placesSearchbox = {
-  init: function(element, valueAccessor) {
+  init: function(element, valueAccessor, allBindingsAccessor) {
     let value = valueAccessor();
     let searchBox = new google.maps.places.SearchBox(element);
 
     // executes if user enters text to search places and clicks a suggestion
     searchBox.addListener('places_changed', function() {
+      self.hideMarkers(placeMarkers);
+
       // bias the SearchBox results towards current map's viewport.
       searchBox.setBounds(map.getBounds());
-
-      self.hideMarkers(placeMarkers);
 
       let places = searchBox.getPlaces();
       self.createMarkersForPlaces(places);
@@ -165,16 +188,22 @@ ko.bindingHandlers.placesSearchbox = {
       if (places.length === 0) {
         window.alert('We did not find any places matching that request');
       }
-
-      value(places);
+      value(element.value);
     });
 
+    // add listener to update value when blurring off the input, to allow
+    // searching without clicking a searchBox suggestions
+    element.addEventListener('blur', function() {
+      value(element.value);
+    });
+
+    // updates searchBox bounds anytime the map bounds change
     google.maps.event.addListener(map, 'bounds_changed', function() {
       searchBox.setBounds(map.getBounds());
     });
   },
 
-  update: function(element, valueAccessor) {
+  update: function(element, valueAccessor, allBindingsAccessor) {
     ko.bindingHandlers.value.update(element, valueAccessor);
   }
 };
@@ -199,7 +228,7 @@ $(document).ready(function() {
   // });
 
   // listen for user clicking go when searching for places
-  document.getElementById('search-nearby-places-go').addEventListener('click', textSearchPlaces);
+  // document.getElementById('search-nearby-places-go').addEventListener('click', textSearchPlaces);
 
   // toggles different views of crime data
   document.getElementById('toggleStandard').addEventListener('click', toggleStandard);
@@ -428,30 +457,30 @@ function searchWithinPolygon() {
 //   }
 // }
 
-// executes if user enters text to search places and clicks 'go'
-function textSearchPlaces() {
-  let bounds = map.getBounds();
-  hideMarkers(placeMarkers);
-
-  let placesService = new google.maps.places.PlacesService(map);
-  let searchText = document.getElementById('search-nearby-places').value;
-
-  if (searchText === '') {
-    window.alert('Please enter an area or place');
-  } else {
-    placesService.textSearch({
-      // bias the search to be within 1000m of the center of the map
-      location: map.getCenter(),
-      radius: 2000,
-      query: searchText,
-      bounds: bounds
-    }, function(results, status) {
-      if (status === google.maps.places.PlacesServiceStatus.OK) {
-        createMarkersForPlaces(results);
-      }
-    });
-  }
-}
+// // executes if user enters text to search places and clicks 'go'
+// function textSearchPlaces() {
+//   let bounds = map.getBounds();
+//   hideMarkers(placeMarkers);
+//
+//   let placesService = new google.maps.places.PlacesService(map);
+//   let searchText = document.getElementById('search-nearby-places').value;
+//
+//   if (searchText === '') {
+//     window.alert('Please enter an area or place');
+//   } else {
+//     placesService.textSearch({
+//       // bias the search to be within 1000m of the center of the map
+//       location: map.getCenter(),
+//       radius: 2000,
+//       query: searchText,
+//       bounds: bounds
+//     }, function(results, status) {
+//       if (status === google.maps.places.PlacesServiceStatus.OK) {
+//         createMarkersForPlaces(results);
+//       }
+//     });
+//   }
+// }
 
 
 function createMarkersForPlaces(places) {
