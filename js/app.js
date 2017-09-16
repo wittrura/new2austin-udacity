@@ -214,22 +214,6 @@ ko.bindingHandlers.placesSearchbox = {
 $(document).ready(function() {
   $('select').material_select();
 
-  // // search box, more wide-reaching version of autocomplete. able to search places
-  // // bias the SearchBox results towards current map's viewport.
-  // let searchBox = new google.maps.places.SearchBox(document.getElementById('search-nearby-places'));
-  // searchBox.setBounds(map.getBounds());
-  // map.addListener('bounds_changed', function() {
-  //   searchBox.setBounds(map.getBounds());
-  // });
-
-  // listen for user selecting a suggested place and clicking directly
-  // searchBox.addListener('places_changed', function() {
-  //   searchBoxPlaces(this);
-  // });
-
-  // listen for user clicking go when searching for places
-  // document.getElementById('search-nearby-places-go').addEventListener('click', textSearchPlaces);
-
   // toggles different views of crime data
   document.getElementById('toggleStandard').addEventListener('click', toggleStandard);
   document.getElementById('toggleCluster').addEventListener('click', toggleCluster);
@@ -445,77 +429,39 @@ function searchWithinPolygon() {
 
 
 
-
-// // executes if user enters text to search places and clicks a suggestion
-// function searchBoxPlaces(searchBox) {
-//   hideMarkers(placeMarkers);
-//   let places = searchBox.getPlaces();
-//   createMarkersForPlaces(places);
+// function createMarkersForPlaces(places) {
+//   let bounds = new google.maps.LatLngBounds();
 //
-//   if (places.length === 0) {
-//     window.alert('We did not find any places matching that request');
-//   }
-// }
-
-// // executes if user enters text to search places and clicks 'go'
-// function textSearchPlaces() {
-//   let bounds = map.getBounds();
-//   hideMarkers(placeMarkers);
+//   for (let i = 0; i < places.length; i++) {
+//     let place = places[i];
+//     let icon = {
+//       url: place.icon,
+//       size: new google.maps.Size(35, 35),
+//       origin: new google.maps.Point(0, 0),
+//       anchor: new google.maps.Point(15, 34),
+//       scaledSize: new google.maps.Size(25, 25)
+//     };
 //
-//   let placesService = new google.maps.places.PlacesService(map);
-//   let searchText = document.getElementById('search-nearby-places').value;
-//
-//   if (searchText === '') {
-//     window.alert('Please enter an area or place');
-//   } else {
-//     placesService.textSearch({
-//       // bias the search to be within 1000m of the center of the map
-//       location: map.getCenter(),
-//       radius: 2000,
-//       query: searchText,
-//       bounds: bounds
-//     }, function(results, status) {
-//       if (status === google.maps.places.PlacesServiceStatus.OK) {
-//         createMarkersForPlaces(results);
-//       }
+//     let marker = new google.maps.Marker({
+//       map: map,
+//       icon: icon,
+//       title: place.name,
+//       position: place.geometry.location,
+//       id: place.place_id
 //     });
+//     placeMarkers.push(marker);
+//
+//     // add listeners to open infowindow with place details on click
+//     marker.addListener('click', setupPlaceMarkerListener);
+//
+//     if (place.geometry.viewport) {
+//       bounds.union(place.geometry.viewport);
+//     } else {
+//       bounds.extend(place.geometry.location);
+//     }
 //   }
+//   // map.fitBounds(bounds);
 // }
-
-
-function createMarkersForPlaces(places) {
-  let bounds = new google.maps.LatLngBounds();
-
-  for (let i = 0; i < places.length; i++) {
-    let place = places[i];
-    let icon = {
-      url: place.icon,
-      size: new google.maps.Size(35, 35),
-      origin: new google.maps.Point(0, 0),
-      anchor: new google.maps.Point(15, 34),
-      scaledSize: new google.maps.Size(25, 25)
-    };
-
-    let marker = new google.maps.Marker({
-      map: map,
-      icon: icon,
-      title: place.name,
-      position: place.geometry.location,
-      id: place.place_id
-    });
-    placeMarkers.push(marker);
-
-    // add listeners to open infowindow with place details on click
-    marker.addListener('click', setupPlaceMarkerListener);
-
-    if (place.geometry.viewport) {
-      bounds.union(place.geometry.viewport);
-    } else {
-      bounds.extend(place.geometry.location);
-    }
-  }
-  // map.fitBounds(bounds);
-}
 
 
 // hide and show markers as different views
