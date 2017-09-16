@@ -6,8 +6,9 @@ function AppViewModel() {
 
   self.zoomToAreaText = ko.observable('');
   self.placesSearchboxText = ko.observable('');
-  self.crimeSeverity = ko.observable('');
+  self.crimeCode = ko.observable('');
   self.mapType = ko.observable('');
+
 
   // loop through and display all crime markers
   self.showCrimes = function(fitBounds = true) {
@@ -25,6 +26,7 @@ function AppViewModel() {
     }
   }
 
+
   // disable layers, hide crimeMarkers, hide placeMarkers
   self.resetMarkers = function() {
     hideMarkers(placeMarkers);
@@ -35,12 +37,14 @@ function AppViewModel() {
     heatmap.setMap(null);
   }
 
+
   // hides arrays of markers
   self.hideMarkers = function(markers) {
     for (let i = 0; i < markers.length; i++) {
       markers[i].setMap(null);
     }
   }
+
 
   // populate array of markers when executing a search for nearby places
   self.createMarkersForPlaces = function(places) {
@@ -77,6 +81,46 @@ function AppViewModel() {
     // map.fitBounds(bounds);
   }
 
+
+  // updates array of crime markers after filtering, accepts array of locations
+  self.updateCrimeMarkers = function(newLocations) {
+    self.resetMarkers();
+    // remove all references to previous markers, full delete
+    crimeMarkers = [];
+
+    for (let i = 0; i < newLocations.length; i++) {
+      let position = newLocations[i].location;
+      let title = newLocations[i].crimeType;
+
+      // create a new marker for each location
+      let marker = new google.maps.Marker({
+        position: position,
+        title: title,
+        animation: google.maps.Animation.DROP,
+        id: i,
+        date: formatDate(newLocations[i].date),
+        reportNum: newLocations[i].reportNum
+      });
+      // add to markers array
+      crimeMarkers.push(marker);
+
+      // add listeners to open infowindow with crime details on click
+      marker.addListener('click', setupCrimeMarkerListener);
+
+      let latLng = new google.maps.LatLng(newLocations[i].location.lat, newLocations[i].location.lng);
+      heatMapData.push(latLng);
+
+    }
+    self.showCrimes();
+
+    // re-check standard view by default
+    // ************************* TODO *************************
+    // bind this to a state, and set update the state instead of manipulating the DOM element
+    document.getElementById('toggleStandard').checked = true;
+    // ************************* TODO *************************
+  }
+
+
   // shows and hides drawing options
   self.toggleDrawingManager = function(drawingManger) {
     if (drawingManager.map) {
@@ -89,6 +133,7 @@ function AppViewModel() {
       drawingManager.setMap(map);
     }
   }
+
 
   // update map view based on user input for a specific address, area, or place
   self.zoomToArea = function() {
@@ -115,6 +160,7 @@ function AppViewModel() {
     }
   }
 
+
   // executes if user enters text to search places and clicks 'go'
   self.searchNearbyPlaces = function() {
     let bounds = map.getBounds();
@@ -138,6 +184,51 @@ function AppViewModel() {
         }
       });
     }
+  }
+
+
+  // filter the full locations array of all crimes by crime type
+  self.filterCrimeMarkersByType = function() {
+    let crimeCode = self.crimeCode();
+    let filteredLocations = [];
+
+    // default case, to return all locations unfiltered
+    if (crimeCode === '6') {
+      return self.updateCrimeMarkers(locations);
+    }
+
+    // push to filtered array based on crime code
+    locations.forEach(function(location) {
+      switch (crimeCode) {
+        case '1': // sex crimes
+          if (location.crimeType.search(/sex|rape/i) > -1) {
+            filteredLocations.push(location);
+          }
+          break;
+        case '2': // theft and burglary
+          if (location.crimeType.search(/burgl|theft|tress/i) > -1) {
+            filteredLocations.push(location);
+          }
+          break;
+        case '3': // assault
+          if (location.crimeType.search(/assault|aslt/i) > -1) {
+            filteredLocations.push(location);
+          }
+          break;
+        case '4': // possession
+          if (location.crimeType.search(/poss/i) > -1) {
+            filteredLocations.push(location);
+          }
+          break;
+        case '5': // driving
+          if (location.crimeType.search(/dui|dwi|driving/i) > -1) {
+            filteredLocations.push(location);
+          }
+          break;
+        default:
+      }
+    });
+    self.updateCrimeMarkers(filteredLocations);
   }
 
 }
@@ -211,6 +302,7 @@ ko.bindingHandlers.placesSearchbox = {
 // Activates knockout.js
 // ko.applyBindings(new AppViewModel());
 
+
 $(document).ready(function() {
   $('select').material_select();
 
@@ -221,9 +313,9 @@ $(document).ready(function() {
 
   // listen for users to click for filtering by category
   // and grab the selected category from the dropdown
-  document.getElementById('crimeType-go').addEventListener('click', function(e) {
-    filterCrimeMarkersType(document.getElementById('crimeType').value);
-  });
+  // document.getElementById('crimeType-go').addEventListener('click', function(e) {
+  //   filterCrimeMarkersType(document.getElementById('crimeType').value);
+  // });
 
   // Activates knockout.js
   ko.applyBindings(new AppViewModel());
@@ -269,7 +361,7 @@ function initMap() {
     type: "GET",
     data: {
       "$offset": 5000,
-      // "$limit" : 500,
+      // "$limit" : 1000,
       "$limit" : 50,
       "$$app_token" : "TaNrAhtTuk3dVwHmpmMHRJJYX"
     }
@@ -385,14 +477,12 @@ function populateInfoWindow(marker, content, infowindow) {
 }
 
 
-
 // hides arrays of markers
 function hideMarkers(markers) {
   for (let i = 0; i < markers.length; i++) {
     markers[i].setMap(null);
   }
 }
-
 
 
 // handles drawing tools
@@ -428,42 +518,6 @@ function searchWithinPolygon() {
 }
 
 
-
-// function createMarkersForPlaces(places) {
-//   let bounds = new google.maps.LatLngBounds();
-//
-//   for (let i = 0; i < places.length; i++) {
-//     let place = places[i];
-//     let icon = {
-//       url: place.icon,
-//       size: new google.maps.Size(35, 35),
-//       origin: new google.maps.Point(0, 0),
-//       anchor: new google.maps.Point(15, 34),
-//       scaledSize: new google.maps.Size(25, 25)
-//     };
-//
-//     let marker = new google.maps.Marker({
-//       map: map,
-//       icon: icon,
-//       title: place.name,
-//       position: place.geometry.location,
-//       id: place.place_id
-//     });
-//     placeMarkers.push(marker);
-//
-//     // add listeners to open infowindow with place details on click
-//     marker.addListener('click', setupPlaceMarkerListener);
-//
-//     if (place.geometry.viewport) {
-//       bounds.union(place.geometry.viewport);
-//     } else {
-//       bounds.extend(place.geometry.location);
-//     }
-//   }
-//   // map.fitBounds(bounds);
-// }
-
-
 // hide and show markers as different views
 // options are standard, clustered, or heatmap
 // resets view before setting to a new one
@@ -484,91 +538,91 @@ function toggleStandard() {
 }
 
 
-// filter the full locations array of all crimes by crime type
-function filterCrimeMarkersType(crimeCode) {
-  let filteredLocations = [];
+// // filter the full locations array of all crimes by crime type
+// function filterCrimeMarkersType(crimeCode) {
+//   let filteredLocations = [];
+//
+//   // default case, to return all locations unfiltered
+//   if (crimeCode === '6') {
+//     return locations;
+//   }
+//
+//   // push to filtered array based on crime code
+//   locations.forEach(function(location) {
+//     switch (crimeCode) {
+//       // sex and rape
+//       case '1':
+//         if (location.crimeType.search(/sex|rape/i) > -1) {
+//           filteredLocations.push(location);
+//         }
+//         break;
+//       // theft and burglary
+//       case '2':
+//         if (location.crimeType.search(/burgl|theft|tress/i) > -1) {
+//           filteredLocations.push(location);
+//         }
+//         break;
+//       // assault
+//       case '3':
+//         if (location.crimeType.search(/assault|aslt/i) > -1) {
+//           filteredLocations.push(location);
+//         }
+//         break;
+//       // possession
+//       case '4':
+//         if (location.crimeType.search(/poss/i) > -1) {
+//           filteredLocations.push(location);
+//         }
+//         break;
+//       // driving
+//       case '5':
+//         if (location.crimeType.search(/dui|dwi|driving/i) > -1) {
+//           filteredLocations.push(location);
+//         }
+//         break;
+//       // other
+//       // case '6':
+//       default:
+//     }
+//   });
+//   updateCrimeMarkers(filteredLocations);
+// }
 
-  // default case, to return all locations unfiltered
-  if (crimeCode === '6') {
-    return locations;
-  }
 
-  // push to filtered array based on crime code
-  locations.forEach(function(location) {
-    switch (crimeCode) {
-      // sex and rape
-      case '1':
-        if (location.crimeType.search(/sex|rape/i) > -1) {
-          filteredLocations.push(location);
-        }
-        break;
-      // theft and burglary
-      case '2':
-        if (location.crimeType.search(/burgl|theft|tress/i) > -1) {
-          filteredLocations.push(location);
-        }
-        break;
-      // assault
-      case '3':
-        if (location.crimeType.search(/assault|aslt/i) > -1) {
-          filteredLocations.push(location);
-        }
-        break;
-      // possession
-      case '4':
-        if (location.crimeType.search(/poss/i) > -1) {
-          filteredLocations.push(location);
-        }
-        break;
-      // driving
-      case '5':
-        if (location.crimeType.search(/dui|dwi|driving/i) > -1) {
-          filteredLocations.push(location);
-        }
-        break;
-      // other
-      // case '6':
-      default:
-    }
-  });
-  updateCrimeMarkers(filteredLocations);
-}
-
-
-// updates array of crime markers after filtering by type or date
-function updateCrimeMarkers(newLocations) {
-  resetMarkers();
-  // remove all references to previous markers, full delete
-  crimeMarkers = [];
-
-  for (let i = 0; i < newLocations.length; i++) {
-    let position = newLocations[i].location;
-    let title = newLocations[i].crimeType;
-
-    // create a new marker for each location
-    let marker = new google.maps.Marker({
-      position: position,
-      title: title,
-      animation: google.maps.Animation.DROP,
-      id: i,
-      date: formatDate(newLocations[i].date),
-      reportNum: newLocations[i].reportNum
-    });
-    // add to markers array
-    crimeMarkers.push(marker);
-
-    // add listeners to open infowindow with crime details on click
-    marker.addListener('click', setupCrimeMarkerListener);
-
-    let latLng = new google.maps.LatLng(newLocations[i].location.lat, newLocations[i].location.lng);
-    heatMapData.push(latLng);
-
-  }
-  showCrimes();
-
-  // re-check standard view by default
-  document.getElementById('toggleStandard').checked = true;
-}
+// // updates array of crime markers after filtering by type or date
+// function updateCrimeMarkers(newLocations) {
+//   resetMarkers();
+//   // remove all references to previous markers, full delete
+//   crimeMarkers = [];
+//
+//   for (let i = 0; i < newLocations.length; i++) {
+//     let position = newLocations[i].location;
+//     let title = newLocations[i].crimeType;
+//
+//     // create a new marker for each location
+//     let marker = new google.maps.Marker({
+//       position: position,
+//       title: title,
+//       animation: google.maps.Animation.DROP,
+//       id: i,
+//       date: formatDate(newLocations[i].date),
+//       reportNum: newLocations[i].reportNum
+//     });
+//     // add to markers array
+//     crimeMarkers.push(marker);
+//
+//     // add listeners to open infowindow with crime details on click
+//     marker.addListener('click', setupCrimeMarkerListener);
+//
+//     let latLng = new google.maps.LatLng(newLocations[i].location.lat, newLocations[i].location.lng);
+//     heatMapData.push(latLng);
+//
+//   }
+//   showCrimes();
+//
+//   // re-check standard view by default
+//   document.getElementById('toggleStandard').checked = true;
+// }
 
 // formats a raw floating timestamp to more common YYYY MMM DD
 function formatDate(date) {

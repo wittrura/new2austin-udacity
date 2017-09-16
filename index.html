@@ -60,7 +60,7 @@
             <div class="col s12"><hr></div>
 
             <div class="input-field col s8">
-              <select id="crimeType">
+              <select data-bind="value: crimeCode" id="crimeType">
                 <option value="" disabled selected>Choose your option</option>
                 <option value="1">Sex Crimes</option>
                 <option value="2">Theft and Burglary</option>
@@ -73,7 +73,7 @@
 
             </div>
             <div class="input-field col s4 right-align">
-              <a class="waves-effect waves-blue btn btn-right" id="crimeType-go" href="#map">Update</a>
+              <a data-bind="click: filterCrimeMarkersByType" class="waves-effect waves-blue btn btn-right" id="crimeType-go" href="#map">Update</a>
             </div>
 
             <div class="col s12"><hr></div>
