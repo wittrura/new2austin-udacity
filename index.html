@@ -50,11 +50,11 @@
             <div class="col s12"><hr></div>
 
             <div class="input-field col s8">
-              <input placeholder="Apartments, bars, gyms..." id="search-nearby-places" type="text">
+              <input data-bind="placesSearchbox: placesSearchboxText" placeholder="Apartments, bars, gyms..." id="search-nearby-places" type="text">
               <label for="landmark">Search for nearby places</label>
             </div>
             <div class="input-field col s4 right-align">
-              <a class="waves-effect waves-blue btn btn-right" id="search-nearby-places-go" href="#map">Go</a>
+              <a data-bind="click: searchNearbyPlaces" class="waves-effect waves-blue btn btn-right" id="search-nearby-places-go" href="#map">Go</a>
             </div>
 
             <div class="col s12"><hr></div>
