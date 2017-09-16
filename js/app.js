@@ -1,10 +1,57 @@
 /* jshint esversion: 6 */
 
+// This is a simple *viewmodel* - JavaScript that defines the data and behavior of your UI
+function AppViewModel() {
+  this.isShowingCrimes = ko.observable(true);
+  this.zoomArea = ko.observable('');
+  this.nearbyPlaces = ko.observable('');
+  this.crimeSeverity = ko.observable('');
+  this.mapType = 'Standard';
+
+  // loop through markers and display all
+  self.showCrimes = function(fitBounds = true) {
+    // instantiate map boundaries
+    let bounds = new google.maps.LatLngBounds();
+
+    for (let i = 0; i < crimeMarkers.length; i++) {
+      crimeMarkers[i].setMap(map);
+      // extend map boundaries for each marker
+      bounds.extend(crimeMarkers[i].position);
+    }
+    // update map to new boundaries
+    if (fitBounds) {
+      map.fitBounds(bounds);
+    }
+  }
+
+  // disable layers, hide crimeMarkers, hide placeMarkers
+  self.resetMarkers = function() {
+    hideMarkers(placeMarkers);
+    hideMarkers(crimeMarkers);
+    if (markerCluster) {
+      markerCluster.clearMarkers();
+    }
+    heatmap.setMap(null);
+  }
+
+  self.searchByInputField = function(field) {
+    return;
+  }
+
+
+}
+
+
 $(document).ready(function() {
+
+  // Activates knockout.js
+  ko.applyBindings(new AppViewModel());
+
+
   $('select').material_select();
 
-  document.getElementById('show-crimes').addEventListener('click', showCrimes);
-  document.getElementById('clear-map').addEventListener('click', resetMarkers);
+  // document.getElementById('show-crimes').addEventListener('click', showCrimes);
+  // document.getElementById('clear-map').addEventListener('click', resetMarkers);
 
   document.getElementById('toggle-drawing').addEventListener('click', function() {
     toggleDrawing(drawingManager);
@@ -199,21 +246,21 @@ function populateInfoWindow(marker, content, infowindow) {
 
 
 // loop through markers and display all
-function showCrimes(fitBounds = true) {
-  // instantiate map boundaries
-  let bounds = new google.maps.LatLngBounds();
-
-  for (let i = 0; i < crimeMarkers.length; i++) {
-    crimeMarkers[i].setMap(map);
-    // extend map boundaries for each marker
-    bounds.extend(crimeMarkers[i].position);
-  }
-
-  // update map to new boundaries
-  if (fitBounds) {
-    map.fitBounds(bounds);
-  }
-}
+// function showCrimes(fitBounds = true) {
+//   // instantiate map boundaries
+//   let bounds = new google.maps.LatLngBounds();
+//
+//   for (let i = 0; i < crimeMarkers.length; i++) {
+//     crimeMarkers[i].setMap(map);
+//     // extend map boundaries for each marker
+//     bounds.extend(crimeMarkers[i].position);
+//   }
+//
+//   // update map to new boundaries
+//   if (fitBounds) {
+//     map.fitBounds(bounds);
+//   }
+// }
 
 // hides arrays of markers
 function hideMarkers(markers) {
@@ -387,15 +434,15 @@ function toggleStandard() {
   showCrimes(false);
 }
 
-// disable layers, hide crimeMarkers, hide placeMarkers
-function resetMarkers() {
-  hideMarkers(placeMarkers);
-  hideMarkers(crimeMarkers);
-  if (markerCluster) {
-    markerCluster.clearMarkers();
-  }
-  heatmap.setMap(null);
-}
+// // disable layers, hide crimeMarkers, hide placeMarkers
+// function resetMarkers() {
+//   hideMarkers(placeMarkers);
+//   hideMarkers(crimeMarkers);
+//   if (markerCluster) {
+//     markerCluster.clearMarkers();
+//   }
+//   heatmap.setMap(null);
+// }
 
 
 // filter the full locations array of all crimes by crime type
