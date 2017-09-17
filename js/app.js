@@ -279,7 +279,7 @@ function AppViewModel() {
       });
       self.updateCrimeMarkers();
     });
-  }
+  };
   // make initial API call to get all locations
   self.getCrimeLocations();
 
@@ -298,7 +298,7 @@ function AppViewModel() {
     if (fitBounds) {
       map.fitBounds(bounds);
     }
-  }
+  };
 
 
   // disable layers, hide crimeMarkers, hide placeMarkers
@@ -309,7 +309,7 @@ function AppViewModel() {
       markerCluster.clearMarkers();
     }
     heatmap.setMap(null);
-  }
+  };
 
 
   // hides arrays of markers
@@ -317,7 +317,7 @@ function AppViewModel() {
     for (let i = 0; i < markers.length; i++) {
       markers[i].setMap(null);
     }
-  }
+  };
 
 
   // populate array of markers when executing a search for nearby places
@@ -353,7 +353,7 @@ function AppViewModel() {
       }
     }
     // map.fitBounds(bounds);
-  }
+  };
 
 
   // updates array of crime markers after filtering, accepts array of locations
@@ -402,7 +402,7 @@ function AppViewModel() {
     // bind this to a state, and set update the state instead of manipulating the DOM element
     document.getElementById('toggleStandard').checked = true;
     // ************************* TODO *************************
-  }
+  };
 
   // set a marker to bounce and deactivate any other bouncing markers
   self.toggleMarkerBounce = function(marker) {
@@ -416,7 +416,7 @@ function AppViewModel() {
     } else {
       marker.setAnimation(google.maps.Animation.BOUNCE);
     }
-  }
+  };
 
 
   // shows and hides drawing options
@@ -430,7 +430,7 @@ function AppViewModel() {
     } else {
       drawingManager.setMap(map);
     }
-  }
+  };
 
 
   // update map view based on user input for a specific address, area, or place
@@ -456,7 +456,7 @@ function AppViewModel() {
         }
       });
     }
-  }
+  };
 
 
   // executes if user enters text to search places and clicks 'go'
@@ -482,7 +482,7 @@ function AppViewModel() {
         }
       });
     }
-  }
+  };
 
 
   // filter the full locations array of all crimes by crime type
@@ -533,7 +533,7 @@ function AppViewModel() {
     });
 
     self.updateCrimeMarkers();
-  }
+  };
 
 
   // toggles different views of crime data
@@ -557,14 +557,14 @@ function AppViewModel() {
       case 'heatmap':
         self.resetMarkers();
         // update to the current heatmap data
-        heatmap.setData(heatmapData)
+        heatmap.setData(heatmapData);
         heatmap.setMap(map);
         break;
     }
 
     // let the default click action proceed
     return true;
-  }
+  };
 
   // handle click events on items in the results list, animates a clicked marker
   self.handleListClick = function(crime) {
