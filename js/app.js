@@ -9,8 +9,19 @@ function AppViewModel() {
   self.crimeCode = ko.observable('');
   self.mapType = ko.observable('standard');
 
+  // full list of ALL crime locations, returned via API
   self.crimeLocations = ko.observableArray([]);
+
+  // filtered list of crime locations
+  self.crimeLocationsFiltered = ko.observableArray([]);
+
+  // list of active crime markers
   self.crimeMarkers = ko.observableArray([]);
+
+  // ************************* TODO *************************
+  // list of active place markers
+  self.placeMarkers = ko.observableArray([]);
+  // ************************* TODO *************************
 
 
   // request crime data from APD API
@@ -42,9 +53,54 @@ function AppViewModel() {
       }
 
       self.updateCrimeMarkers(self.crimeLocations());
+    }).fail(function() {
+
+      console.log('error getting data');
+      data = [
+        {
+          incident_report_number: '123',
+          crime_type: 'rape',
+          date: '1505435885000',
+          address: '2005 willow creek dr austin tx 78741',
+          latitude: '30.231903',
+          longitude: '-97.728427'
+        },
+        {
+          incident_report_number: '3492',
+          crime_type: 'burglary',
+          date: '1505003885000',
+          address: '2005 willow creek dr austin tx 78741',
+          latitude: '30.231903',
+          longitude: '-97.72'
+        },
+        {
+          incident_report_number: '1095',
+          crime_type: 'dwi',
+          date: '1502325485000',
+          address: '2005 willow creek dr austin tx 78741',
+          latitude: '30.231903',
+          longitude: '-97.73'
+        },
+      ];
+      for (let i = 0; i < data.length; i++) {
+        self.crimeLocations.push({
+          reportNum: data[i].incident_report_number,
+          crimeType: data[i].crime_type,
+          date: data[i].date,
+          address: data[i].address,
+          location: {
+            lat: Number.parseFloat(data[i].latitude),
+            lng: Number.parseFloat(data[i].longitude)
+          }
+        });
+      }
+
+      self.updateCrimeMarkers(self.crimeLocations());
     });
   }
+  // make initial API call to get all locations
   self.getCrimeLocations();
+
 
 
   // loop through and display all crime markers
@@ -52,10 +108,10 @@ function AppViewModel() {
     // instantiate map boundaries
     let bounds = new google.maps.LatLngBounds();
 
-    for (let i = 0; i < self.crimeMarkers.length; i++) {
-      self.crimeMarkers[i].setMap(map);
+    for (let i = 0; i < self.crimeMarkers().length; i++) {
+      self.crimeMarkers()[i].setMap(map);
       // extend map boundaries for each marker
-      bounds.extend(self.crimeMarkers[i].position);
+      bounds.extend(self.crimeMarkers()[i].position);
     }
     // update map to new boundaries
     if (fitBounds) {
@@ -67,7 +123,7 @@ function AppViewModel() {
   // disable layers, hide crimeMarkers, hide placeMarkers
   self.resetMarkers = function() {
     hideMarkers(placeMarkers);
-    hideMarkers(self.crimeMarkers);
+    hideMarkers(self.crimeMarkers());
     if (markerCluster) {
       markerCluster.clearMarkers();
     }
@@ -121,12 +177,10 @@ function AppViewModel() {
 
   // updates array of crime markers after filtering, accepts array of locations
   self.updateCrimeMarkers = function(locations) {
-    console.log('locations for updating crime markers');
-    console.log(locations);
 
     // remove all references to previous markers, full delete
     self.resetMarkers();
-    self.crimeMarkers = [];
+    self.crimeMarkers.removeAll();
     // crimeMarkers = [];
     heatMapData = [];
 
@@ -148,8 +202,6 @@ function AppViewModel() {
       // crimeMarkers.push(marker);
       self.crimeMarkers.push(marker);
       // console.log(self.crimeMarkers);
-
-
 
       // add listeners to open infowindow with crime details on click
       marker.addListener('click', setupCrimeMarkerListener);
@@ -239,46 +291,55 @@ function AppViewModel() {
   // filter the full locations array of all crimes by crime type
   self.filterCrimeMarkersByType = function() {
     let crimeCode = self.crimeCode();
-    let filteredLocations = [];
+
+
+    // let filteredLocations = [];
+    self.crimeLocationsFiltered.removeAll();
+
 
     // default case, to return all locations unfiltered
     if (crimeCode === '6') {
-      return self.updateCrimeMarkers(self.crimeLocationslocations);
+      // set filtered array to have values of full, unfiltered crimeLocations
+      self.crimeLocations().forEach(function(crimeLocation) {
+        self.crimeLocationsFiltered.push(crimeLocation);
+      });
+      return self.updateCrimeMarkers(self.crimeLocationsFiltered());
     }
 
-    console.log(self.crimeLocations());
+    // console.log(self.crimeLocations());
     // push to filtered array based on crime code
     self.crimeLocations().forEach(function(location) {
       switch (crimeCode) {
         case '1': // sex crimes
           if (location.crimeType.search(/sex|rape/i) > -1) {
-            filteredLocations.push(location);
+            self.crimeLocationsFiltered.push(location);
           }
           break;
         case '2': // theft and burglary
           if (location.crimeType.search(/burgl|theft|tress/i) > -1) {
-            filteredLocations.push(location);
+            self.crimeLocationsFiltered.push(location);
           }
           break;
         case '3': // assault
           if (location.crimeType.search(/assault|aslt/i) > -1) {
-            filteredLocations.push(location);
+            self.crimeLocationsFiltered.push(location);
           }
           break;
         case '4': // possession
           if (location.crimeType.search(/poss/i) > -1) {
-            filteredLocations.push(location);
+            self.crimeLocationsFiltered.push(location);
           }
           break;
         case '5': // driving
           if (location.crimeType.search(/dui|dwi|driving/i) > -1) {
-            filteredLocations.push(location);
+            self.crimeLocationsFiltered.push(location);
           }
           break;
         default:
       }
     });
-    self.updateCrimeMarkers(filteredLocations);
+
+    self.updateCrimeMarkers(self.crimeLocationsFiltered());
   }
 
 
@@ -296,13 +357,16 @@ function AppViewModel() {
 
       case 'cluster':
         self.resetMarkers();
-        markerCluster = new MarkerClusterer(map, self.crimeMarkers, {imagePath: './m'});
+        markerCluster = new MarkerClusterer(map, self.crimeMarkers(), {imagePath: './m'});
         self.showCrimes(false);
         break;
 
       case 'heatmap':
         self.resetMarkers();
+        // ************************* TODO *************************
+        // find a way to update the heatmap data based on the current self.crimeMarkers
         heatmap.setMap(map);
+        // ************************* TODO *************************
         break;
     }
 
@@ -402,11 +466,13 @@ let heatMap = null;
 let heatMapData = [];
 
 // blank array for all crimes markers
-let crimeMarkers = [];
+// let crimeMarkers = [];
+
 // separate from crime markers, these will be for searching places
 let placeMarkers = [];
+
 // to store full list of data from API
-let locations = [];
+// let locations = [];
 
 
 // intialize map object with default properties
