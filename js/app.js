@@ -9,16 +9,53 @@ function AppViewModel() {
   self.crimeCode = ko.observable('');
   self.mapType = ko.observable('standard');
 
+  self.crimeLocations = ko.observableArray([]);
+  self.crimeMarkers = ko.observableArray([]);
+
+
+  // request crime data from APD API
+  self.getCrimeLocations = function() {
+    $.ajax({
+      // filter for latitude > 1 to get ONLY crime data with lat/lng
+      url: "https://data.austintexas.gov/resource/rkrg-9tez.json?$where=latitude > 1",
+      type: "GET",
+      data: {
+        // limiting and offsetting to get the most recent data in a usable size
+        "$offset": 5000,
+        // "$limit" : 1000,
+        "$limit" : 50,
+        "$$app_token" : "TaNrAhtTuk3dVwHmpmMHRJJYX"
+      }
+    }).done(function(data) {
+
+      for (let i = 0; i < data.length; i++) {
+        self.crimeLocations.push({
+          reportNum: data[i].incident_report_number,
+          crimeType: data[i].crime_type,
+          date: data[i].date,
+          address: data[i].address,
+          location: {
+            lat: Number.parseFloat(data[i].latitude),
+            lng: Number.parseFloat(data[i].longitude)
+          }
+        });
+      }
+
+      self.updateCrimeMarkers(self.crimeLocations());
+    });
+  }
+  self.getCrimeLocations();
+
 
   // loop through and display all crime markers
   self.showCrimes = function(fitBounds = true) {
     // instantiate map boundaries
     let bounds = new google.maps.LatLngBounds();
 
-    for (let i = 0; i < crimeMarkers.length; i++) {
-      crimeMarkers[i].setMap(map);
+    for (let i = 0; i < self.crimeMarkers.length; i++) {
+      self.crimeMarkers[i].setMap(map);
       // extend map boundaries for each marker
-      bounds.extend(crimeMarkers[i].position);
+      bounds.extend(self.crimeMarkers[i].position);
     }
     // update map to new boundaries
     if (fitBounds) {
@@ -30,7 +67,7 @@ function AppViewModel() {
   // disable layers, hide crimeMarkers, hide placeMarkers
   self.resetMarkers = function() {
     hideMarkers(placeMarkers);
-    hideMarkers(crimeMarkers);
+    hideMarkers(self.crimeMarkers);
     if (markerCluster) {
       markerCluster.clearMarkers();
     }
@@ -83,14 +120,19 @@ function AppViewModel() {
 
 
   // updates array of crime markers after filtering, accepts array of locations
-  self.updateCrimeMarkers = function(newLocations) {
-    self.resetMarkers();
-    // remove all references to previous markers, full delete
-    crimeMarkers = [];
+  self.updateCrimeMarkers = function(locations) {
+    console.log('locations for updating crime markers');
+    console.log(locations);
 
-    for (let i = 0; i < newLocations.length; i++) {
-      let position = newLocations[i].location;
-      let title = newLocations[i].crimeType;
+    // remove all references to previous markers, full delete
+    self.resetMarkers();
+    self.crimeMarkers = [];
+    // crimeMarkers = [];
+    heatMapData = [];
+
+    for (let i = 0; i < locations.length; i++) {
+      let position = locations[i].location;
+      let title = locations[i].crimeType;
 
       // create a new marker for each location
       let marker = new google.maps.Marker({
@@ -98,20 +140,25 @@ function AppViewModel() {
         title: title,
         animation: google.maps.Animation.DROP,
         id: i,
-        date: formatDate(newLocations[i].date),
-        reportNum: newLocations[i].reportNum
+        date: formatDate(locations[i].date),
+        reportNum: locations[i].reportNum
       });
+
       // add to markers array
-      crimeMarkers.push(marker);
+      // crimeMarkers.push(marker);
+      self.crimeMarkers.push(marker);
+      // console.log(self.crimeMarkers);
+
+
 
       // add listeners to open infowindow with crime details on click
       marker.addListener('click', setupCrimeMarkerListener);
 
-      let latLng = new google.maps.LatLng(newLocations[i].location.lat, newLocations[i].location.lng);
+      let latLng = new google.maps.LatLng(locations[i].location.lat, locations[i].location.lng);
       heatMapData.push(latLng);
 
     }
-    if (newLocations.length > 0) {
+    if (locations.length > 0) {
       self.showCrimes();
     }
 
@@ -196,11 +243,12 @@ function AppViewModel() {
 
     // default case, to return all locations unfiltered
     if (crimeCode === '6') {
-      return self.updateCrimeMarkers(locations);
+      return self.updateCrimeMarkers(self.crimeLocationslocations);
     }
 
+    console.log(self.crimeLocations());
     // push to filtered array based on crime code
-    locations.forEach(function(location) {
+    self.crimeLocations().forEach(function(location) {
       switch (crimeCode) {
         case '1': // sex crimes
           if (location.crimeType.search(/sex|rape/i) > -1) {
@@ -235,21 +283,20 @@ function AppViewModel() {
 
 
   // toggles different views of crime data
-  // hide and show markers as different views
-  // options are standard, clustered, or heatmap
-  // resets view before setting to a new one
   self.updateMapType = function() {
     let mapType = self.mapType();
 
+    // options are standard, clustered, or heatmap
     switch (mapType) {
       case 'standard':
+        // resets view before setting to a new one
         self.resetMarkers();
         self.showCrimes(false);
         break;
 
       case 'cluster':
         self.resetMarkers();
-        markerCluster = new MarkerClusterer(map, crimeMarkers, {imagePath: './m'});
+        markerCluster = new MarkerClusterer(map, self.crimeMarkers, {imagePath: './m'});
         self.showCrimes(false);
         break;
 
@@ -338,11 +385,6 @@ ko.bindingHandlers.placesSearchbox = {
 $(document).ready(function() {
   $('select').material_select();
 
-  // toggles different views of crime data
-  // document.getElementById('toggleStandard').addEventListener('click', toggleStandard);
-  // document.getElementById('toggleCluster').addEventListener('click', toggleCluster);
-  // document.getElementById('toggleHeatmap').addEventListener('click', toggleHeatmap);
-
   // Activates knockout.js
   ko.applyBindings(new AppViewModel());
 });
@@ -379,82 +421,84 @@ function initMap() {
   // instantiate infowindow
   largeInfowindow = new google.maps.InfoWindow();
 
+  // initialize the drawing manager
+  drawingManager = new google.maps.drawing.DrawingManager({
+    drawingMode: google.maps.drawing.OverlayType.POLYGON,
+    drawingControl: true,
+    drawingControlOptions: {
+      position: google.maps.ControlPosition.TOP_LEFT,
+      drawingModes: [
+        google.maps.drawing.OverlayType.POLYGON
+      ]
+    }
+  });
+  drawingManager.addListener('overlaycomplete', function(e) {
+    activateDrawingMarkers(e);
+  });
+
+  // initialize heatmap layer
+  heatmap = new google.maps.visualization.HeatmapLayer({
+    data: heatMapData,
+    dissipating: true,
+    map: map,
+    radius: 50,
+    opacity: 0.5
+  });
+  heatmap.setMap(null);
+
   // call to APD API to get data
   // limiting and offsetting to get the most recent data in a usable size
   // filter for latitude > 1 to get ONLY crime data with lat/lng
-  $.ajax({
-    url: "https://data.austintexas.gov/resource/rkrg-9tez.json?$where=latitude > 1",
-    type: "GET",
-    data: {
-      "$offset": 5000,
-      // "$limit" : 1000,
-      "$limit" : 50,
-      "$$app_token" : "TaNrAhtTuk3dVwHmpmMHRJJYX"
-    }
-  }).done(function(data) {
+  // $.ajax({
+  //   url: "https://data.austintexas.gov/resource/rkrg-9tez.json?$where=latitude > 1",
+  //   type: "GET",
+  //   data: {
+  //     "$offset": 5000,
+  //     // "$limit" : 1000,
+  //     "$limit" : 50,
+  //     "$$app_token" : "TaNrAhtTuk3dVwHmpmMHRJJYX"
+  //   }
+  // }).done(function(data) {
+  //
+  //   for (let i = 0; i < data.length; i++) {
+  //     locations.push({
+  //       reportNum: data[i].incident_report_number,
+  //       crimeType: data[i].crime_type,
+  //       date: data[i].date,
+  //       address: data[i].address,
+  //       location: {
+  //         lat: Number.parseFloat(data[i].latitude),
+  //         lng: Number.parseFloat(data[i].longitude)
+  //       }
+  //     });
+  //   }
+  //
+  //   for (let i = 0; i < locations.length; i++) {
+  //     let position = locations[i].location;
+  //     let title = locations[i].crimeType;
+  //
+  //     // create a new marker for each location
+  //     let marker = new google.maps.Marker({
+  //       position: position,
+  //       title: title,
+  //       animation: google.maps.Animation.DROP,
+  //       id: i,
+  //       date: formatDate(locations[i].date),
+  //       reportNum: locations[i].reportNum
+  //     });
+  //     // add to markers array
+  //     crimeMarkers.push(marker);
+  //
+  //     // add listeners to open infowindow with crime details on click
+  //     marker.addListener('click', setupCrimeMarkerListener);
+  //
+  //     let latLng = new google.maps.LatLng(locations[i].location.lat, locations[i].location.lng);
+  //     heatMapData.push(latLng);
+  //   }
+  //
+  //
+  // });
 
-    for (let i = 0; i < data.length; i++) {
-      locations.push({
-        reportNum: data[i].incident_report_number,
-        crimeType: data[i].crime_type,
-        date: data[i].date,
-        address: data[i].address,
-        location: {
-          lat: Number.parseFloat(data[i].latitude),
-          lng: Number.parseFloat(data[i].longitude)
-        }
-      });
-    }
-
-    for (let i = 0; i < locations.length; i++) {
-      let position = locations[i].location;
-      let title = locations[i].crimeType;
-
-      // create a new marker for each location
-      let marker = new google.maps.Marker({
-        position: position,
-        title: title,
-        animation: google.maps.Animation.DROP,
-        id: i,
-        date: formatDate(locations[i].date),
-        reportNum: locations[i].reportNum
-      });
-      // add to markers array
-      crimeMarkers.push(marker);
-
-      // add listeners to open infowindow with crime details on click
-      marker.addListener('click', setupCrimeMarkerListener);
-
-      let latLng = new google.maps.LatLng(locations[i].location.lat, locations[i].location.lng);
-      heatMapData.push(latLng);
-    }
-
-    // initialize the drawing manager
-    drawingManager = new google.maps.drawing.DrawingManager({
-      drawingMode: google.maps.drawing.OverlayType.POLYGON,
-      drawingControl: true,
-      drawingControlOptions: {
-        position: google.maps.ControlPosition.TOP_LEFT,
-        drawingModes: [
-          google.maps.drawing.OverlayType.POLYGON
-        ]
-      }
-    });
-    drawingManager.addListener('overlaycomplete', function(e) {
-      activateDrawingMarkers(e);
-    });
-
-    // initialize heatmap layer
-    heatmap = new google.maps.visualization.HeatmapLayer({
-      data: heatMapData,
-      dissipating: true,
-      map: map,
-      radius: 50,
-      opacity: 0.5
-    });
-    heatmap.setMap(null);
-
-  });
 }
 
 // populates infowindow when a marker is clicked
@@ -503,12 +547,14 @@ function populateInfoWindow(marker, content, infowindow) {
 }
 
 
+
 // hides arrays of markers
 function hideMarkers(markers) {
   for (let i = 0; i < markers.length; i++) {
     markers[i].setMap(null);
   }
 }
+
 
 
 // handles drawing tools
@@ -543,25 +589,6 @@ function searchWithinPolygon() {
   }
 }
 
-
-// // hide and show markers as different views
-// // options are standard, clustered, or heatmap
-// // resets view before setting to a new one
-// function toggleHeatmap() {
-//   resetMarkers();
-//   heatmap.setMap(map);
-// }
-//
-// function toggleCluster() {
-//   resetMarkers();
-//   markerCluster = new MarkerClusterer(map, crimeMarkers, {imagePath: './m'});
-//   showCrimes(false);
-// }
-//
-// function toggleStandard() {
-//   resetMarkers();
-//   showCrimes(false);
-// }
 
 // formats a raw floating timestamp to more common YYYY MMM DD
 function formatDate(date) {

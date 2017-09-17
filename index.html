@@ -105,8 +105,34 @@
           <div class="row" id="map"></div>
         </main>
         <!-- /map -->
+
+      </div>
+      <div class="row">
+
+        <!-- results list -->
+        <aside class="col s12 offset-m2 m8">
+          <table class="striped">
+            <thead>
+              <tr>
+                <th>Crime Type</th>
+                <th>Address</th>
+                <th>Report Number</th>
+              </tr>
+            </thead>
+            <tbody data-bind="foreach: crimeLocations">
+              <tr>
+                <td data-bind="text: crimeType"></td>
+                <td data-bind="text: address"></td>
+                <td data-bind="text: reportNum"></td>
+              </tr>
+            </tbody>
+          </table>
+        </aside>
+        <!-- /results list -->
+
       </div>
     </div>
+
     <script src="js/markerclusterer.js"></script>
     <!-- Compiled and minified JavaScript -->
     <script src="https://code.jquery.com/jquery-3.2.1.js" integrity="sha256-DZAnKJ/6XZ9si04Hgrsxu/8s717jcIzLy3oi35EouyE=" crossorigin="anonymous"></script>
@@ -114,5 +140,6 @@
     <script type='text/javascript' src='js/knockout-3.4.2.js'></script>
     <script type="text/javascript" src="js/app.js"  defer></script>
     <script defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBmtXin7oAd31UpI6KzioQIdSNBqCQuKx8&libraries=drawing,geometry,places,visualization&callback=initMap" type="text/javascript"></script>
+
   </body>
 </html>
