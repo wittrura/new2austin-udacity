@@ -17,11 +17,9 @@ function AppViewModel() {
 
   // list of active crime markers
   self.crimeMarkers = ko.observableArray([]);
-
-  // ************************* TODO *************************
+  
   // list of active place markers
-  // self.placeMarkers = ko.observableArray([]);
-  // ************************* TODO *************************
+  self.placeMarkers = ko.observableArray([]);
 
 
   // request crime data from APD API
@@ -131,7 +129,7 @@ function AppViewModel() {
 
   // disable layers, hide crimeMarkers, hide placeMarkers
   self.resetMarkers = function() {
-    hideMarkers(placeMarkers);
+    hideMarkers(self.placeMarkers());
     hideMarkers(self.crimeMarkers());
     if (markerCluster) {
       markerCluster.clearMarkers();
@@ -169,7 +167,7 @@ function AppViewModel() {
         position: place.geometry.location,
         id: place.place_id
       });
-      placeMarkers.push(marker);
+      self.placeMarkers.push(marker);
 
       // add listeners to open infowindow with place details on click
       marker.addListener('click', setupPlaceMarkerListener);
@@ -277,7 +275,7 @@ function AppViewModel() {
     let placesService = new google.maps.places.PlacesService(map);
     let searchText = self.placesSearchboxText();
 
-    self.hideMarkers(placeMarkers);
+    self.hideMarkers(self.placeMarkers());
 
     if (searchText === '') {
       window.alert('Please enter an area or place');
@@ -417,7 +415,7 @@ ko.bindingHandlers.placesSearchbox = {
 
     // executes if user enters text to search places and clicks a suggestion
     searchBox.addListener('places_changed', function() {
-      self.hideMarkers(placeMarkers);
+      self.hideMarkers(bindingContext.placeMarkers());
 
       // bias the SearchBox results towards current map's viewport.
       searchBox.setBounds(map.getBounds());
@@ -475,7 +473,7 @@ let heatmapData = [];
 // let crimeMarkers = [];
 
 // separate from crime markers, these will be for searching places
-let placeMarkers = [];
+// let placeMarkers = [];
 
 // to store full list of data from API
 // let locations = [];
@@ -628,7 +626,6 @@ function hideMarkers(markers) {
 }
 
 
-
 // handles drawing tools
 function activateDrawingMarkers(event) {
   // if there is an existing polygon, get rid of it and remove the markers
@@ -649,7 +646,6 @@ function activateDrawingMarkers(event) {
   polygon.getPath().addListener('insert_at', searchWithinPolygon);
 }
 
-
 // hides all markers outside polygon, and shows markers within
 function searchWithinPolygon() {
   for (let i = 0; i < crimeMarkers.length; i++) {
@@ -660,7 +656,6 @@ function searchWithinPolygon() {
     }
   }
 }
-
 
 // formats a raw floating timestamp to more common YYYY MMM DD
 function formatDate(date) {
