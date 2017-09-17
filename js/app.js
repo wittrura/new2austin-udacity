@@ -1,17 +1,19 @@
 /* jshint esversion: 6 */
-$('select').material_select();
-
+$('select').material_select(); // activate special select fields in materialize
 
 // instantiate map and supporting components for use globally
 var map = null;
 let largeInfowindow = null;
+
 let drawingManager = null;
 let polygon = null;
 
-// instantiate markerCluster and heatmap variables for use globally
 let markerCluster = null;
 let heatmap = null;
 let heatmapData = [];
+
+// list of active crime markers
+let crimeMarkers = [];
 
 
 // intialize map object with default properties
@@ -191,9 +193,6 @@ function AppViewModel() {
   // filtered list of crime locations
   self.crimeLocationsFiltered = ko.observableArray([]);
 
-  // list of active crime markers
-  self.crimeMarkers = ko.observableArray([]);
-
   // list of active place markers
   self.placeMarkers = ko.observableArray([]);
 
@@ -290,10 +289,10 @@ function AppViewModel() {
     // instantiate map boundaries
     let bounds = new google.maps.LatLngBounds();
 
-    for (let i = 0; i < self.crimeMarkers().length; i++) {
-      self.crimeMarkers()[i].setMap(map);
+    for (let i = 0; i < crimeMarkers.length; i++) {
+      crimeMarkers[i].setMap(map);
       // extend map boundaries for each marker
-      bounds.extend(self.crimeMarkers()[i].position);
+      bounds.extend(crimeMarkers[i].position);
     }
     // update map to new boundaries
     if (fitBounds) {
@@ -305,7 +304,7 @@ function AppViewModel() {
   // disable layers, hide crimeMarkers, hide placeMarkers
   self.resetMarkers = function() {
     hideMarkers(self.placeMarkers());
-    hideMarkers(self.crimeMarkers());
+    hideMarkers(crimeMarkers);
     if (markerCluster) {
       markerCluster.clearMarkers();
     }
@@ -362,7 +361,7 @@ function AppViewModel() {
     locations = self.crimeLocationsFiltered();
     // remove all references to previous markers, full delete
     self.resetMarkers();
-    self.crimeMarkers.removeAll();
+    crimeMarkers = [];
     heatmapData = [];
 
     for (let i = 0; i < locations.length; i++) {
@@ -381,7 +380,7 @@ function AppViewModel() {
       });
 
       // add to markers array
-      self.crimeMarkers.push(marker);
+      crimeMarkers.push(marker);
 
       // add listeners to open infowindow with crime details on click
       marker.addListener('click', setupCrimeMarkerListener);
@@ -407,7 +406,7 @@ function AppViewModel() {
 
   // set a marker to bounce and deactivate any other bouncing markers
   self.toggleMarkerBounce = function(marker) {
-    self.crimeMarkers().forEach(function(crimeMarker) {
+    crimeMarkers.forEach(function(crimeMarker) {
       if (crimeMarker.getAnimation() !== null) {
         crimeMarker.setAnimation(null);
       }
@@ -551,7 +550,7 @@ function AppViewModel() {
 
       case 'cluster':
         self.resetMarkers();
-        markerCluster = new MarkerClusterer(map, self.crimeMarkers(), {imagePath: './m'});
+        markerCluster = new MarkerClusterer(map, crimeMarkers, {imagePath: './m'});
         self.showCrimes(false);
         break;
 
@@ -569,7 +568,7 @@ function AppViewModel() {
 
   // handle click events on items in the results list, animates a clicked marker
   self.handleListClick = function(crime) {
-    self.crimeMarkers().forEach(function(crimeMarker) {
+    crimeMarkers.forEach(function(crimeMarker) {
       if (crimeMarker.reportNum === crime.reportNum) {
         self.toggleMarkerBounce(crimeMarker);
       }
