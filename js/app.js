@@ -52,7 +52,12 @@ function AppViewModel() {
         });
       }
 
-      self.updateCrimeMarkers(self.crimeLocations());
+      // set filtered array to have values of full, unfiltered crimeLocations
+      self.crimeLocations().forEach(function(crimeLocation) {
+        self.crimeLocationsFiltered.push(crimeLocation);
+      });
+
+      self.updateCrimeMarkers();
     }).fail(function() {
 
       console.log('error getting data');
@@ -95,7 +100,12 @@ function AppViewModel() {
         });
       }
 
-      self.updateCrimeMarkers(self.crimeLocations());
+      // set filtered array to have values of full, unfiltered crimeLocations
+      self.crimeLocations().forEach(function(crimeLocation) {
+        self.crimeLocationsFiltered.push(crimeLocation);
+      });
+
+      self.updateCrimeMarkers();
     });
   }
   // make initial API call to get all locations
@@ -176,8 +186,8 @@ function AppViewModel() {
 
 
   // updates array of crime markers after filtering, accepts array of locations
-  self.updateCrimeMarkers = function(locations) {
-
+  self.updateCrimeMarkers = function() {
+    locations = self.crimeLocationsFiltered();
     // remove all references to previous markers, full delete
     self.resetMarkers();
     self.crimeMarkers.removeAll();
@@ -303,7 +313,7 @@ function AppViewModel() {
       self.crimeLocations().forEach(function(crimeLocation) {
         self.crimeLocationsFiltered.push(crimeLocation);
       });
-      return self.updateCrimeMarkers(self.crimeLocationsFiltered());
+      return self.updateCrimeMarkers();
     }
 
     // console.log(self.crimeLocations());
@@ -339,7 +349,7 @@ function AppViewModel() {
       }
     });
 
-    self.updateCrimeMarkers(self.crimeLocationsFiltered());
+    self.updateCrimeMarkers();
   }
 
 
