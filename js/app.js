@@ -404,7 +404,7 @@ function AppViewModel() {
   // callback for adding listener to markers to animate on click
   self.setupToggleMarkerBounce = function () {
     return self.toggleMarkerBounce(this);
-  }
+  };
 
   // set a marker to bounce and deactivate any other bouncing markers
   self.toggleMarkerBounce = function(marker) {
@@ -575,7 +575,7 @@ function AppViewModel() {
         self.toggleMarkerBounce(crimeMarker);
       }
     });
-  }
+  };
 
 }
 
