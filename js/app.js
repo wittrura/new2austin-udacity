@@ -50,6 +50,10 @@ function initMap() {
     opacity: 0.5
   });
   heatmap.setMap(null);
+
+  // Activates knockout.js, called in this initialize function to allow for
+  // bindings that use maps API
+  ko.applyBindings(new AppViewModel());
 }
 
 function initMapError() {
@@ -231,50 +235,50 @@ function AppViewModel() {
     }).fail(function() {
       window.alert('Unable to fetch data from Austin PD API. Site is still live for searching by area places.');
       // MOCKS - for dev purposes in case of API error
-      // data = [
-      //   {
-      //     incident_report_number: '123',
-      //     crime_type: 'rape',
-      //     date: '1505435885000',
-      //     address: '2005 willow creek dr austin tx 78741',
-      //     latitude: '30.231903',
-      //     longitude: '-97.728427'
-      //   },
-      //   {
-      //     incident_report_number: '3492',
-      //     crime_type: 'burglary',
-      //     date: '1505003885000',
-      //     address: '2005 willow creek dr austin tx 78741',
-      //     latitude: '30.231903',
-      //     longitude: '-97.72'
-      //   },
-      //   {
-      //     incident_report_number: '1095',
-      //     crime_type: 'dwi',
-      //     date: '1502325485000',
-      //     address: '2005 willow creek dr austin tx 78741',
-      //     latitude: '30.231903',
-      //     longitude: '-97.73'
-      //   },
-      // ];
-      // for (let i = 0; i < data.length; i++) {
-      //   self.crimeLocations.push({
-      //     reportNum: data[i].incident_report_number,
-      //     crimeType: data[i].crime_type,
-      //     date: data[i].date,
-      //     address: data[i].address,
-      //     location: {
-      //       lat: Number.parseFloat(data[i].latitude),
-      //       lng: Number.parseFloat(data[i].longitude)
-      //     }
-      //   });
-      // }
-      //
-      // // set filtered array to have values of full, unfiltered crimeLocations
-      // self.crimeLocations().forEach(function(crimeLocation) {
-      //   self.crimeLocationsFiltered.push(crimeLocation);
-      // });
-      // self.updateCrimeMarkers();
+      data = [
+        {
+          incident_report_number: '123',
+          crime_type: 'rape',
+          date: '1505435885000',
+          address: '2005 willow creek dr austin tx 78741',
+          latitude: '30.231903',
+          longitude: '-97.728427'
+        },
+        {
+          incident_report_number: '3492',
+          crime_type: 'burglary',
+          date: '1505003885000',
+          address: '2005 willow creek dr austin tx 78741',
+          latitude: '30.231903',
+          longitude: '-97.72'
+        },
+        {
+          incident_report_number: '1095',
+          crime_type: 'dwi',
+          date: '1502325485000',
+          address: '2005 willow creek dr austin tx 78741',
+          latitude: '30.231903',
+          longitude: '-97.73'
+        },
+      ];
+      for (let i = 0; i < data.length; i++) {
+        self.crimeLocations.push({
+          reportNum: data[i].incident_report_number,
+          crimeType: data[i].crime_type,
+          date: data[i].date,
+          address: data[i].address,
+          location: {
+            lat: Number.parseFloat(data[i].latitude),
+            lng: Number.parseFloat(data[i].longitude)
+          }
+        });
+      }
+
+      // set filtered array to have values of full, unfiltered crimeLocations
+      self.crimeLocations().forEach(function(crimeLocation) {
+        self.crimeLocationsFiltered.push(crimeLocation);
+      });
+      self.updateCrimeMarkers();
     });
   }
   // make initial API call to get all locations
@@ -639,17 +643,3 @@ ko.bindingHandlers.placesSearchbox = {
     ko.bindingHandlers.value.update(element, valueAccessor);
   }
 };
-
-// Activates knockout.js
-// ko.applyBindings(new AppViewModel());
-
-
-// $(document).ready(function() {
-//   // $('select').material_select();
-//
-//   // // Activates knockout.js
-//   // ko.applyBindings(new AppViewModel());
-// });
-
-// Activates knockout.js
-ko.applyBindings(new AppViewModel());
