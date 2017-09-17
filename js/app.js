@@ -170,7 +170,6 @@ function setupPlaceMarkerListener (windowToPopulate) {
 }
 
 
-
 // ************************* TODO *************************
 // should any variables that are not updated by the view
 // go to a separate object to manage state??
@@ -385,7 +384,7 @@ function AppViewModel() {
       // add listeners to open infowindow with crime details on click
       marker.addListener('click', setupCrimeMarkerListener);
       // animate marker on clicks
-      marker.addListener('click', () => { self.toggleMarkerBounce(marker); });
+      marker.addListener('click', self.setupToggleMarkerBounce);
 
       let latLng = new google.maps.LatLng(locations[i].location.lat, locations[i].location.lng);
       heatmapData.push(latLng);
@@ -401,6 +400,11 @@ function AppViewModel() {
     document.getElementById('toggleStandard').checked = true;
     // ************************* TODO *************************
   };
+
+  // callback for adding listener to markers to animate on click
+  self.setupToggleMarkerBounce = function () {
+    return self.toggleMarkerBounce(this);
+  }
 
   // set a marker to bounce and deactivate any other bouncing markers
   self.toggleMarkerBounce = function(marker) {
