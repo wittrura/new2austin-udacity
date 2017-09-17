@@ -20,7 +20,7 @@ function AppViewModel() {
 
   // ************************* TODO *************************
   // list of active place markers
-  self.placeMarkers = ko.observableArray([]);
+  // self.placeMarkers = ko.observableArray([]);
   // ************************* TODO *************************
 
 
@@ -56,8 +56,8 @@ function AppViewModel() {
       self.crimeLocations().forEach(function(crimeLocation) {
         self.crimeLocationsFiltered.push(crimeLocation);
       });
-
       self.updateCrimeMarkers();
+
     }).fail(function() {
 
       console.log('error getting data');
@@ -104,13 +104,12 @@ function AppViewModel() {
       self.crimeLocations().forEach(function(crimeLocation) {
         self.crimeLocationsFiltered.push(crimeLocation);
       });
-
       self.updateCrimeMarkers();
+
     });
   }
   // make initial API call to get all locations
   self.getCrimeLocations();
-
 
 
   // loop through and display all crime markers
@@ -302,7 +301,6 @@ function AppViewModel() {
   self.filterCrimeMarkersByType = function() {
     let crimeCode = self.crimeCode();
 
-
     // let filteredLocations = [];
     self.crimeLocationsFiltered.removeAll();
 
@@ -372,7 +370,7 @@ function AppViewModel() {
 
       case 'heatmap':
         self.resetMarkers();
-        // update the heatmap data
+        // update to the current heatmap data
         heatmap.setData(heatmapData)
         heatmap.setMap(map);
         break;
@@ -413,7 +411,7 @@ ko.bindingHandlers.addressAutocomplete = {
 
 // search box, more wide-reaching version of autocomplete. able to search places
 ko.bindingHandlers.placesSearchbox = {
-  init: function(element, valueAccessor, allBindingsAccessor) {
+  init: function(element, valueAccessor, allBindingsAccessor, bindingContext) {
     let value = valueAccessor();
     let searchBox = new google.maps.places.SearchBox(element);
 
@@ -425,7 +423,7 @@ ko.bindingHandlers.placesSearchbox = {
       searchBox.setBounds(map.getBounds());
 
       let places = searchBox.getPlaces();
-      self.createMarkersForPlaces(places);
+      bindingContext.createMarkersForPlaces(places);
 
       if (places.length === 0) {
         window.alert('We did not find any places matching that request');
