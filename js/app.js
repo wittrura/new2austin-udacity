@@ -1,5 +1,13 @@
 /* jshint esversion: 6 */
 
+
+// ************************* TODO *************************
+// should any variables that are not updated by the view
+// go to a separate object to manage state??
+// EX: crimeLocations, crimeLocationsFiltered, crimeMarkers, placeMarkers
+// ************************* TODO *************************
+
+
 // *viewmodel* - JavaScript that defines the data and behavior of your UI
 function AppViewModel() {
   let self = this;
@@ -17,7 +25,7 @@ function AppViewModel() {
 
   // list of active crime markers
   self.crimeMarkers = ko.observableArray([]);
-  
+
   // list of active place markers
   self.placeMarkers = ko.observableArray([]);
 
@@ -188,7 +196,6 @@ function AppViewModel() {
     // remove all references to previous markers, full delete
     self.resetMarkers();
     self.crimeMarkers.removeAll();
-    // crimeMarkers = [];
     heatmapData = [];
 
     for (let i = 0; i < locations.length; i++) {
@@ -206,12 +213,17 @@ function AppViewModel() {
       });
 
       // add to markers array
-      // crimeMarkers.push(marker);
       self.crimeMarkers.push(marker);
-      // console.log(self.crimeMarkers);
 
       // add listeners to open infowindow with crime details on click
       marker.addListener('click', setupCrimeMarkerListener);
+      marker.addListener('click', function() {
+         if (marker.getAnimation() !== null) {
+          marker.setAnimation(null);
+        } else {
+          marker.setAnimation(google.maps.Animation.BOUNCE);
+        }
+       });
 
       let latLng = new google.maps.LatLng(locations[i].location.lat, locations[i].location.lng);
       heatmapData.push(latLng);
@@ -299,7 +311,6 @@ function AppViewModel() {
   self.filterCrimeMarkersByType = function() {
     let crimeCode = self.crimeCode();
 
-    // let filteredLocations = [];
     self.crimeLocationsFiltered.removeAll();
 
     // default case, to return all locations unfiltered
@@ -311,7 +322,6 @@ function AppViewModel() {
       return self.updateCrimeMarkers();
     }
 
-    // console.log(self.crimeLocations());
     // push to filtered array based on crime code
     self.crimeLocations().forEach(function(location) {
       switch (crimeCode) {
@@ -469,15 +479,6 @@ let markerCluster = null;
 let heatmap = null;
 let heatmapData = [];
 
-// blank array for all crimes markers
-// let crimeMarkers = [];
-
-// separate from crime markers, these will be for searching places
-// let placeMarkers = [];
-
-// to store full list of data from API
-// let locations = [];
-
 
 // intialize map object with default properties
 function initMap() {
@@ -515,60 +516,6 @@ function initMap() {
     opacity: 0.5
   });
   heatmap.setMap(null);
-
-  // call to APD API to get data
-  // limiting and offsetting to get the most recent data in a usable size
-  // filter for latitude > 1 to get ONLY crime data with lat/lng
-  // $.ajax({
-  //   url: "https://data.austintexas.gov/resource/rkrg-9tez.json?$where=latitude > 1",
-  //   type: "GET",
-  //   data: {
-  //     "$offset": 5000,
-  //     // "$limit" : 1000,
-  //     "$limit" : 50,
-  //     "$$app_token" : "TaNrAhtTuk3dVwHmpmMHRJJYX"
-  //   }
-  // }).done(function(data) {
-  //
-  //   for (let i = 0; i < data.length; i++) {
-  //     locations.push({
-  //       reportNum: data[i].incident_report_number,
-  //       crimeType: data[i].crime_type,
-  //       date: data[i].date,
-  //       address: data[i].address,
-  //       location: {
-  //         lat: Number.parseFloat(data[i].latitude),
-  //         lng: Number.parseFloat(data[i].longitude)
-  //       }
-  //     });
-  //   }
-  //
-  //   for (let i = 0; i < locations.length; i++) {
-  //     let position = locations[i].location;
-  //     let title = locations[i].crimeType;
-  //
-  //     // create a new marker for each location
-  //     let marker = new google.maps.Marker({
-  //       position: position,
-  //       title: title,
-  //       animation: google.maps.Animation.DROP,
-  //       id: i,
-  //       date: formatDate(locations[i].date),
-  //       reportNum: locations[i].reportNum
-  //     });
-  //     // add to markers array
-  //     crimeMarkers.push(marker);
-  //
-  //     // add listeners to open infowindow with crime details on click
-  //     marker.addListener('click', setupCrimeMarkerListener);
-  //
-  //     let latLng = new google.maps.LatLng(locations[i].location.lat, locations[i].location.lng);
-  //     heatMapData.push(latLng);
-  //   }
-  //
-  //
-  // });
-
 }
 
 // populates infowindow when a marker is clicked
