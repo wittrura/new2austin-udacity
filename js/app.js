@@ -385,7 +385,7 @@ function AppViewModel() {
       // add listeners to open infowindow with crime details on click
       marker.addListener('click', setupCrimeMarkerListener);
       // animate marker on clicks
-      marker.addListener('click', function() => { self.toggleMarkerBounce(marker); });
+      marker.addListener('click', () => { self.toggleMarkerBounce(marker); });
 
       let latLng = new google.maps.LatLng(locations[i].location.lat, locations[i].location.lng);
       heatmapData.push(latLng);
