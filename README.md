@@ -27,7 +27,7 @@ Install NPM dependencies
 npm install
 ```
 
-Start the server - runs on port 5000 by default
+Start the server - runs on port 8000 by default
 
 ```
 npm start

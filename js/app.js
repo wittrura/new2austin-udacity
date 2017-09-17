@@ -1,4 +1,168 @@
 /* jshint esversion: 6 */
+$('select').material_select();
+
+
+// instantiate map and supporting components for use globally
+var map = null;
+let largeInfowindow = null;
+let drawingManager = null;
+let polygon = null;
+
+// instantiate markerCluster and heatmap variables for use globally
+let markerCluster = null;
+let heatmap = null;
+let heatmapData = [];
+
+
+// intialize map object with default properties
+function initMap() {
+  const AUSTIN = {lat: 30.2672, lng: -97.7431};
+  // set high level zoom on austin - higher zoom number is lower to the ground
+  map = new google.maps.Map(document.getElementById('map'), {
+    zoom: 10,
+    center: AUSTIN
+  });
+
+  // instantiate infowindow
+  largeInfowindow = new google.maps.InfoWindow();
+
+  // initialize the drawing manager
+  drawingManager = new google.maps.drawing.DrawingManager({
+    drawingMode: google.maps.drawing.OverlayType.POLYGON,
+    drawingControl: true,
+    drawingControlOptions: {
+      position: google.maps.ControlPosition.TOP_LEFT,
+      drawingModes: [
+        google.maps.drawing.OverlayType.POLYGON
+      ]
+    }
+  });
+  drawingManager.addListener('overlaycomplete', function(e) {
+    activateDrawingMarkers(e);
+  });
+
+  // initialize heatmap layer
+  heatmap = new google.maps.visualization.HeatmapLayer({
+    data: heatmapData,
+    dissipating: true,
+    map: map,
+    radius: 50,
+    opacity: 0.5
+  });
+  heatmap.setMap(null);
+}
+
+function initMapError() {
+  window.alert('Unable to reach Google Maps API. Please try again later.');
+}
+
+// populates infowindow when a marker is clicked
+// only one infowindow allowed open at a time
+// data is populated based on markers position
+// function populateCrimeInfoWindow(marker, infowindow) {
+function populateCrimeInfoWindow(marker, infowindow) {
+  let formattedReportNum = `${marker.reportNum.substring(0,4)}-${marker.reportNum.substring(4)}`;
+  let content = `
+    <div>${marker.title}</div>
+    <div>Date: ${marker.date}</div>
+    <div>Report Number:
+      <a target='_blank' href='https://www.ci.austin.tx.us/police/reports/search2.cfm?choice=caseno&caseno=${formattedReportNum}&Submit=Submit'>
+      ${formattedReportNum}</a>
+    </div>`;
+
+  populateInfoWindow(marker, content, infowindow);
+}
+
+function populatePlacesInfoWindow(marker, infowindow) {
+  let placesService = new google.maps.places.PlacesService(map);
+  placesService.getDetails({placeId: marker.id}, function(place, status) {
+    if (status === google.maps.places.PlacesServiceStatus.OK) {
+      let content = `
+        <div>${marker.title}</div>
+        <div><a target='_blank' href='${place.website}'>${place.website}</a></div>`;
+
+      populateInfoWindow(marker, content, infowindow);
+    }
+  });
+}
+
+function populateInfoWindow(marker, content, infowindow) {
+  // check that the infowindow is not already opened on this marker
+  if (infowindow.marker != marker) {
+    // assign marker, content, and open infowindow
+    infowindow.marker = marker;
+    infowindow.setContent(content);
+    infowindow.open(map, marker);
+
+    // clear marker property if an infowindow is closed
+    infowindow.addListener('closeclick', function() {
+      infowindow.marker = null;
+    });
+  }
+}
+
+
+
+// hides arrays of markers
+function hideMarkers(markers) {
+  for (let i = 0; i < markers.length; i++) {
+    markers[i].setMap(null);
+  }
+}
+
+
+// handles drawing tools
+function activateDrawingMarkers(event) {
+  // if there is an existing polygon, get rid of it and remove the markers
+  if (polygon) {
+    polygon.setMap(null);
+    hideMarkers(crimeMarkers);
+  }
+  // switch drawing mode to HAND and end drawing
+  drawingManager.setDrawingMode(null);
+
+  // update polygon based on the event overlay
+  polygon = event.overlay;
+  polygon.setEditable(true);
+
+  // search area inside polygon, and redo search if it is changed
+  searchWithinPolygon();
+  polygon.getPath().addListener('set_at', searchWithinPolygon);
+  polygon.getPath().addListener('insert_at', searchWithinPolygon);
+}
+
+// hides all markers outside polygon, and shows markers within
+function searchWithinPolygon() {
+  for (let i = 0; i < crimeMarkers.length; i++) {
+    if (google.maps.geometry.poly.containsLocation(crimeMarkers[i].position, polygon)) {
+      crimeMarkers[i].setMap(map);
+    } else {
+      crimeMarkers[i].setMap(null);
+    }
+  }
+}
+
+// formats a raw floating timestamp to more common YYYY MMM DD
+function formatDate(date) {
+  let months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  let dateObj = new Date(date);
+  let day = dateObj.getDate();
+  let monthNum = dateObj.getMonth();
+  let year = dateObj.getFullYear();
+
+  return `${year} ${months[monthNum]} ${day}`;
+}
+
+// defines process for setting up this infowindow, to be added via listener
+// after new markers are created for crimes
+function setupCrimeMarkerListener () {
+  return populateCrimeInfoWindow(this, largeInfowindow);
+}
+function setupPlaceMarkerListener (windowToPopulate) {
+  return populatePlacesInfoWindow(this, largeInfowindow);
+}
+
 
 
 // ************************* TODO *************************
@@ -65,53 +229,52 @@ function AppViewModel() {
       self.updateCrimeMarkers();
 
     }).fail(function() {
-
-      console.log('error getting data');
-      data = [
-        {
-          incident_report_number: '123',
-          crime_type: 'rape',
-          date: '1505435885000',
-          address: '2005 willow creek dr austin tx 78741',
-          latitude: '30.231903',
-          longitude: '-97.728427'
-        },
-        {
-          incident_report_number: '3492',
-          crime_type: 'burglary',
-          date: '1505003885000',
-          address: '2005 willow creek dr austin tx 78741',
-          latitude: '30.231903',
-          longitude: '-97.72'
-        },
-        {
-          incident_report_number: '1095',
-          crime_type: 'dwi',
-          date: '1502325485000',
-          address: '2005 willow creek dr austin tx 78741',
-          latitude: '30.231903',
-          longitude: '-97.73'
-        },
-      ];
-      for (let i = 0; i < data.length; i++) {
-        self.crimeLocations.push({
-          reportNum: data[i].incident_report_number,
-          crimeType: data[i].crime_type,
-          date: data[i].date,
-          address: data[i].address,
-          location: {
-            lat: Number.parseFloat(data[i].latitude),
-            lng: Number.parseFloat(data[i].longitude)
-          }
-        });
-      }
-
-      // set filtered array to have values of full, unfiltered crimeLocations
-      self.crimeLocations().forEach(function(crimeLocation) {
-        self.crimeLocationsFiltered.push(crimeLocation);
-      });
-      self.updateCrimeMarkers();
-
+      window.alert('Unable to fetch data from Austin PD API. Site is still live for searching by area places.');
+      // MOCKS - for dev purposes in case of API error
+      // data = [
+      //   {
+      //     incident_report_number: '123',
+      //     crime_type: 'rape',
+      //     date: '1505435885000',
+      //     address: '2005 willow creek dr austin tx 78741',
+      //     latitude: '30.231903',
+      //     longitude: '-97.728427'
+      //   },
+      //   {
+      //     incident_report_number: '3492',
+      //     crime_type: 'burglary',
+      //     date: '1505003885000',
+      //     address: '2005 willow creek dr austin tx 78741',
+      //     latitude: '30.231903',
+      //     longitude: '-97.72'
+      //   },
+      //   {
+      //     incident_report_number: '1095',
+      //     crime_type: 'dwi',
+      //     date: '1502325485000',
+      //     address: '2005 willow creek dr austin tx 78741',
+      //     latitude: '30.231903',
+      //     longitude: '-97.73'
+      //   },
+      // ];
+      // for (let i = 0; i < data.length; i++) {
+      //   self.crimeLocations.push({
+      //     reportNum: data[i].incident_report_number,
+      //     crimeType: data[i].crime_type,
+      //     date: data[i].date,
+      //     address: data[i].address,
+      //     location: {
+      //       lat: Number.parseFloat(data[i].latitude),
+      //       lng: Number.parseFloat(data[i].longitude)
+      //     }
+      //   });
+      // }
+      //
+      // // set filtered array to have values of full, unfiltered crimeLocations
+      // self.crimeLocations().forEach(function(crimeLocation) {
+      //   self.crimeLocationsFiltered.push(crimeLocation);
+      // });
+      // self.updateCrimeMarkers();
     });
   }
   // make initial API call to get all locations
@@ -236,7 +399,6 @@ function AppViewModel() {
     // bind this to a state, and set update the state instead of manipulating the DOM element
     document.getElementById('toggleStandard').checked = true;
     // ************************* TODO *************************
-    console.log(self.crimeMarkers());
   }
 
   // set a marker to bounce and deactivate any other bouncing markers
@@ -482,167 +644,12 @@ ko.bindingHandlers.placesSearchbox = {
 // ko.applyBindings(new AppViewModel());
 
 
-$(document).ready(function() {
-  $('select').material_select();
+// $(document).ready(function() {
+//   // $('select').material_select();
+//
+//   // // Activates knockout.js
+//   // ko.applyBindings(new AppViewModel());
+// });
 
-  // Activates knockout.js
-  ko.applyBindings(new AppViewModel());
-});
-
-
-// instantiate map and supporting components for use globally
-var map = null;
-let largeInfowindow = null;
-let drawingManager = null;
-let polygon = null;
-
-// instantiate markerCluster and heatmap variables for use globally
-let markerCluster = null;
-let heatmap = null;
-let heatmapData = [];
-
-
-// intialize map object with default properties
-function initMap() {
-  const AUSTIN = {lat: 30.2672, lng: -97.7431};
-  // set high level zoom on austin - higher zoom number is lower to the ground
-  map = new google.maps.Map(document.getElementById('map'), {
-    zoom: 10,
-    center: AUSTIN
-  });
-
-  // instantiate infowindow
-  largeInfowindow = new google.maps.InfoWindow();
-
-  // initialize the drawing manager
-  drawingManager = new google.maps.drawing.DrawingManager({
-    drawingMode: google.maps.drawing.OverlayType.POLYGON,
-    drawingControl: true,
-    drawingControlOptions: {
-      position: google.maps.ControlPosition.TOP_LEFT,
-      drawingModes: [
-        google.maps.drawing.OverlayType.POLYGON
-      ]
-    }
-  });
-  drawingManager.addListener('overlaycomplete', function(e) {
-    activateDrawingMarkers(e);
-  });
-
-  // initialize heatmap layer
-  heatmap = new google.maps.visualization.HeatmapLayer({
-    data: heatmapData,
-    dissipating: true,
-    map: map,
-    radius: 50,
-    opacity: 0.5
-  });
-  heatmap.setMap(null);
-}
-
-// populates infowindow when a marker is clicked
-// only one infowindow allowed open at a time
-// data is populated based on markers position
-// function populateCrimeInfoWindow(marker, infowindow) {
-function populateCrimeInfoWindow(marker, infowindow) {
-  let formattedReportNum = `${marker.reportNum.substring(0,4)}-${marker.reportNum.substring(4)}`;
-  let content = `
-    <div>${marker.title}</div>
-    <div>Date: ${marker.date}</div>
-    <div>Report Number:
-      <a target='_blank' href='https://www.ci.austin.tx.us/police/reports/search2.cfm?choice=caseno&caseno=${formattedReportNum}&Submit=Submit'>
-      ${formattedReportNum}</a>
-    </div>`;
-
-  populateInfoWindow(marker, content, infowindow);
-}
-
-function populatePlacesInfoWindow(marker, infowindow) {
-  let placesService = new google.maps.places.PlacesService(map);
-  placesService.getDetails({placeId: marker.id}, function(place, status) {
-    if (status === google.maps.places.PlacesServiceStatus.OK) {
-      let content = `
-        <div>${marker.title}</div>
-        <div><a target='_blank' href='${place.website}'>${place.website}</a></div>`;
-
-      populateInfoWindow(marker, content, infowindow);
-    }
-  });
-}
-
-function populateInfoWindow(marker, content, infowindow) {
-  // check that the infowindow is not already opened on this marker
-  if (infowindow.marker != marker) {
-    // assign marker, content, and open infowindow
-    infowindow.marker = marker;
-    infowindow.setContent(content);
-    infowindow.open(map, marker);
-
-    // clear marker property if an infowindow is closed
-    infowindow.addListener('closeclick', function() {
-      infowindow.marker = null;
-    });
-  }
-}
-
-
-
-// hides arrays of markers
-function hideMarkers(markers) {
-  for (let i = 0; i < markers.length; i++) {
-    markers[i].setMap(null);
-  }
-}
-
-
-// handles drawing tools
-function activateDrawingMarkers(event) {
-  // if there is an existing polygon, get rid of it and remove the markers
-  if (polygon) {
-    polygon.setMap(null);
-    hideMarkers(crimeMarkers);
-  }
-  // switch drawing mode to HAND and end drawing
-  drawingManager.setDrawingMode(null);
-
-  // update polygon based on the event overlay
-  polygon = event.overlay;
-  polygon.setEditable(true);
-
-  // search area inside polygon, and redo search if it is changed
-  searchWithinPolygon();
-  polygon.getPath().addListener('set_at', searchWithinPolygon);
-  polygon.getPath().addListener('insert_at', searchWithinPolygon);
-}
-
-// hides all markers outside polygon, and shows markers within
-function searchWithinPolygon() {
-  for (let i = 0; i < crimeMarkers.length; i++) {
-    if (google.maps.geometry.poly.containsLocation(crimeMarkers[i].position, polygon)) {
-      crimeMarkers[i].setMap(map);
-    } else {
-      crimeMarkers[i].setMap(null);
-    }
-  }
-}
-
-// formats a raw floating timestamp to more common YYYY MMM DD
-function formatDate(date) {
-  let months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  let dateObj = new Date(date);
-  let day = dateObj.getDate();
-  let monthNum = dateObj.getMonth();
-  let year = dateObj.getFullYear();
-
-  return `${year} ${months[monthNum]} ${day}`;
-}
-
-// defines process for setting up this infowindow, to be added via listener
-// after new markers are created for crimes
-function setupCrimeMarkerListener () {
-  return populateCrimeInfoWindow(this, largeInfowindow);
-}
-function setupPlaceMarkerListener (windowToPopulate) {
-  return populatePlacesInfoWindow(this, largeInfowindow);
-}
+// Activates knockout.js
+ko.applyBindings(new AppViewModel());
