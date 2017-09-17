@@ -192,7 +192,7 @@ function AppViewModel() {
     self.resetMarkers();
     self.crimeMarkers.removeAll();
     // crimeMarkers = [];
-    heatMapData = [];
+    heatmapData = [];
 
     for (let i = 0; i < locations.length; i++) {
       let position = locations[i].location;
@@ -217,7 +217,7 @@ function AppViewModel() {
       marker.addListener('click', setupCrimeMarkerListener);
 
       let latLng = new google.maps.LatLng(locations[i].location.lat, locations[i].location.lng);
-      heatMapData.push(latLng);
+      heatmapData.push(latLng);
 
     }
     if (locations.length > 0) {
@@ -306,7 +306,6 @@ function AppViewModel() {
     // let filteredLocations = [];
     self.crimeLocationsFiltered.removeAll();
 
-
     // default case, to return all locations unfiltered
     if (crimeCode === '6') {
       // set filtered array to have values of full, unfiltered crimeLocations
@@ -373,10 +372,9 @@ function AppViewModel() {
 
       case 'heatmap':
         self.resetMarkers();
-        // ************************* TODO *************************
-        // find a way to update the heatmap data based on the current self.crimeMarkers
+        // update the heatmap data
+        heatmap.setData(heatmapData)
         heatmap.setMap(map);
-        // ************************* TODO *************************
         break;
     }
 
@@ -470,10 +468,10 @@ let largeInfowindow = null;
 let drawingManager = null;
 let polygon = null;
 
-// instantiate markerCluster and heatMap variables for use globally
+// instantiate markerCluster and heatmap variables for use globally
 let markerCluster = null;
-let heatMap = null;
-let heatMapData = [];
+let heatmap = null;
+let heatmapData = [];
 
 // blank array for all crimes markers
 // let crimeMarkers = [];
@@ -514,7 +512,7 @@ function initMap() {
 
   // initialize heatmap layer
   heatmap = new google.maps.visualization.HeatmapLayer({
-    data: heatMapData,
+    data: heatmapData,
     dissipating: true,
     map: map,
     radius: 50,
