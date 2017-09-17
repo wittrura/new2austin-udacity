@@ -204,6 +204,7 @@ function AppViewModel() {
 
       // create a new marker for each location
       let marker = new google.maps.Marker({
+        address: locations[i].address,
         position: position,
         title: title,
         animation: google.maps.Animation.DROP,
@@ -217,13 +218,10 @@ function AppViewModel() {
 
       // add listeners to open infowindow with crime details on click
       marker.addListener('click', setupCrimeMarkerListener);
-      marker.addListener('click', function() {
-         if (marker.getAnimation() !== null) {
-          marker.setAnimation(null);
-        } else {
-          marker.setAnimation(google.maps.Animation.BOUNCE);
-        }
-       });
+      // animate marker on clicks
+      marker.addListener('click', function(e) {
+        self.toggleMarkerBounce(marker);
+      });
 
       let latLng = new google.maps.LatLng(locations[i].location.lat, locations[i].location.lng);
       heatmapData.push(latLng);
@@ -238,6 +236,21 @@ function AppViewModel() {
     // bind this to a state, and set update the state instead of manipulating the DOM element
     document.getElementById('toggleStandard').checked = true;
     // ************************* TODO *************************
+    console.log(self.crimeMarkers());
+  }
+
+  // set a marker to bounce and deactivate any other bouncing markers
+  self.toggleMarkerBounce = function(marker) {
+    self.crimeMarkers().forEach(function(crimeMarker) {
+      if (crimeMarker.getAnimation() !== null) {
+        crimeMarker.setAnimation(null);
+      }
+    });
+    if (marker.getAnimation() !== null) {
+      marker.setAnimation(null);
+    } else {
+      marker.setAnimation(google.maps.Animation.BOUNCE);
+    }
   }
 
 
@@ -386,6 +399,15 @@ function AppViewModel() {
 
     // let the default click action proceed
     return true;
+  }
+
+  // handle click events on items in the results list, animates a clicked marker
+  self.handleListClick = function(crime) {
+    self.crimeMarkers().forEach(function(crimeMarker) {
+      if (crimeMarker.reportNum === crime.reportNum) {
+        self.toggleMarkerBounce(crimeMarker);
+      }
+    });
   }
 
 }

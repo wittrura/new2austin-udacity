@@ -120,7 +120,7 @@
               </tr>
             </thead>
             <tbody data-bind="foreach: crimeLocationsFiltered">
-              <tr>
+              <tr data-bind="click: $root.handleListClick">
                 <td data-bind="text: crimeType"></td>
                 <td data-bind="text: address"></td>
                 <td data-bind="text: reportNum"></td>
