@@ -395,10 +395,7 @@ function AppViewModel() {
     }
 
     // re-check standard view by default
-    // ************************* TODO *************************
-    // bind this to a state, and set update the state instead of manipulating the DOM element
-    document.getElementById('toggleStandard').checked = true;
-    // ************************* TODO *************************
+    self.mapType('standard');
   };
 
   // callback for adding listener to markers to animate on click
