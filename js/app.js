@@ -572,6 +572,12 @@ function AppViewModel() {
   self.handleListClick = function(crime) {
     crimeMarkers.forEach(function(crimeMarker) {
       if (crimeMarker.reportNum === crime.reportNum) {
+        // toggle infowindow
+        if (largeInfowindow.marker != crimeMarker) {
+          populateCrimeInfoWindow(crimeMarker, largeInfowindow);
+        } else {
+          largeInfowindow.close();
+        }
         self.toggleMarkerBounce(crimeMarker);
       }
     });
