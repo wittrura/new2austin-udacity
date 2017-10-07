@@ -16,6 +16,23 @@ let heatmapData = [];
 let crimeMarkers = [];
 
 
+// hide/show markers based on distance from given point
+function searchWithinRadius(centerLat, centerLng, radiusKm) {
+  // let radius_km = 1;
+  // let center = new google.maps.LatLng(30.2672, -97.7431);
+  let center = new google.maps.LatLng(centerLat, centerLng);
+  for (let i = 0; i < crimeMarkers.length; i++) {
+    let markerLatLng = new google.maps.LatLng(crimeMarkers[i].getPosition().lat(), crimeMarkers[i].getPosition().lng());
+    let distance = google.maps.geometry.spherical.computeDistanceBetween(center, markerLatLng);
+    if (distance > radiusKm * 1000) {
+      crimeMarkers[i].setMap(null);
+    } else {
+      crimeMarkers[i].setMap(map);
+    }
+  }
+}
+
+
 // intialize map object with default properties
 function initMap() {
   const AUSTIN = {lat: 30.2672, lng: -97.7431};
